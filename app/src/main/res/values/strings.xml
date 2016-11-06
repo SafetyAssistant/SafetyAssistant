@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">SafetyAssistant</string>
+
+    <string name="options">Options</string>
+    <string name="about">About</string>
+    <string name="help">Help</string>
 </resources>
