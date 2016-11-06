@@ -20,7 +20,7 @@
         android:layout_centerHorizontal="true" />
 
     <Switch
-        android:text="Enable push notifications                           "
+        android:text="Enable push notifications                          "
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/night_mode"
