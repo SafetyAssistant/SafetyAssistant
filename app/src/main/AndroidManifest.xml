@@ -20,9 +20,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".Options" />
-        <activity android:name=".About" />
-        <activity android:name=".Help"></activity>
+        <activity android:name=".Options"
+            android:label="@string/options"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity android:name=".About"
+            android:label="@string/about"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity android:name=".Help"
+            android:label="@string/help"
+            android:screenOrientation="portrait" >
+            </activity>
     </application>
 
 </manifest>
