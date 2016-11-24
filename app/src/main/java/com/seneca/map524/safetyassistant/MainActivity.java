@@ -14,8 +14,17 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+
+import au.com.bytecode.opencsv.CSVReader;
+import static java.lang.Double.parseDouble;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -51,9 +60,70 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
         mMap.animateCamera(CameraUpdateFactory.zoomTo( 12.0f ));
+
+        List<String[]> assaults = getCsvData("assault.csv");
+        List<Double[]> assaultCoordinates = getParsedCoordinates(assaults, 0);
+        for(int i = 0; i < assaultCoordinates.size(); i++) {
+            mMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(assaultCoordinates.get(i)[1], assaultCoordinates.get(i)[0]))
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.assault))
+                    );
+        }
+
+        List<String[]> autoThefts = getCsvData("auto-theft.csv");
+        List<Double[]> autoTheftsCoordinates = getParsedCoordinates(autoThefts, 0);
+        for(int i = 0; i < autoTheftsCoordinates.size(); i++) {
+            mMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(autoTheftsCoordinates.get(i)[1], autoTheftsCoordinates.get(i)[0]))
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.car_theft_1))
+            );
+        }
+
+        List<String[]> homicides = getCsvData("homicide.csv");
+        List<Double[]> homicidesCoordinates = getParsedCoordinates(homicides, 0);
+        for(int i = 0; i < homicidesCoordinates.size(); i++) {
+            mMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(homicidesCoordinates.get(i)[1], homicidesCoordinates.get(i)[0]))
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.homicide))
+            );
+        }
+
+        List<String[]> robberies = getCsvData("robbery.csv");
+        List<Double[]> robberiesCoordinates = getParsedCoordinates(robberies, 0);
+        for(int i = 0; i < robberiesCoordinates.size(); i++) {
+            mMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(robberiesCoordinates.get(i)[1], robberiesCoordinates.get(i)[0]))
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.robbery))
+            );
+        }
+
+        List<String[]> sexualAssaults = getCsvData("sexual-assault.csv");
+        List<Double[]> sexualAssaultsCoordinates = getParsedCoordinates(sexualAssaults, 0);
+        for(int i = 0; i < sexualAssaultsCoordinates.size(); i++) {
+            mMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(sexualAssaultsCoordinates.get(i)[1], sexualAssaultsCoordinates.get(i)[0]))
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.sexual_assault))
+            );
+        }
+
+        List<String[]> shootings = getCsvData("shooting.csv");
+        List<Double[]> shootingsCoordinates = getParsedCoordinates(shootings, 0);
+        for(int i = 0; i < shootingsCoordinates.size(); i++) {
+            mMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(shootingsCoordinates.get(i)[1], shootingsCoordinates.get(i)[0]))
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.gun))
+            );
+        }
+
+        List<String[]> theftOvers = getCsvData("theft-over.csv");
+        List<Double[]> theftOversCoordinates = getParsedCoordinates(theftOvers, 0);
+        for(int i = 0; i < theftOversCoordinates.size(); i++) {
+            mMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(theftOversCoordinates.get(i)[1], theftOversCoordinates.get(i)[0]))
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.theft_over))
+            );
+        }
     }
-
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -92,4 +162,40 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return super.onOptionsItemSelected(item);
         }
     }
+
+    //Parsing csv files, each line becomes a String which we keep in the List
+    List<String[]> getCsvData(String filename) {
+        String next[] = {};
+        List<String[]> list = new ArrayList<String[]>();
+        try {
+            //Specify asset file name in open();
+            CSVReader reader = new CSVReader(new InputStreamReader(getAssets().open(filename)));
+            reader.readNext();
+            for(;;) {
+                next = reader.readNext();
+                if(next != null) {
+                    list.add(next);
+                } else {
+                    break;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    //all coordinates in all datasets come in format "POINT (-79.40189534 43.641915264)"
+    //but we need to get just doubles from them
+    List<Double[]> getParsedCoordinates(List<String[]> data, int column){
+        List<Double[]> list = new ArrayList<Double[]>();
+        String[] tokens;
+        for (int i = 0; i < data.size(); i++) {
+            tokens = data.get(i)[column].split(" ");
+            Double[] coordinates = {parseDouble(tokens[1].replace("(", "")), parseDouble(tokens[2].replace(")", ""))};
+            list.add(coordinates);
+        }
+        return list;
+    }
+
 }
