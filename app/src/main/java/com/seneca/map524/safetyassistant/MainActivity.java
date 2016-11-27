@@ -3,6 +3,7 @@ package com.seneca.map524.safetyassistant;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -11,13 +12,20 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.location.Location;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -42,9 +50,11 @@ import java.util.List;
 import au.com.bytecode.opencsv.CSVReader;
 import static java.lang.Double.parseDouble;
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private GoogleMap mMap;
+    GoogleApiClient mGoogleApiClient;
+    LatLng startLocation;
     private ClusterManager<MyItem> assaultClusterManager;
     private ClusterManager<MyItem> autoTheftClusterManager;
     private ClusterManager<MyItem> homicideClusterManager;
@@ -64,6 +74,58 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        // Create an instance of GoogleAPIClient.
+        if (mGoogleApiClient == null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
+        }
+
+    }
+
+    protected void onStart() {
+        mGoogleApiClient.connect();
+        super.onStart();
+    }
+
+    protected void onStop() {
+        mGoogleApiClient.disconnect();
+        super.onStop();
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                        == PackageManager.PERMISSION_GRANTED    ) {
+            final Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+                    mGoogleApiClient);
+            if (mLastLocation != null) {
+                LatLng toronto = new LatLng(43.6532, -79.3832);
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(toronto, 1));
+                new android.os.Handler().postDelayed(
+                     new Runnable() {
+                          public void run() {
+                              startLocation = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+                              CameraUpdate location = CameraUpdateFactory.newLatLngZoom(startLocation, 16);
+                              mMap.animateCamera(location);
+                          }
+                     },
+                     1000);
+            }
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
 
     }
 
@@ -79,11 +141,43 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                        == PackageManager.PERMISSION_GRANTED    ) {
+            mMap.setMyLocationEnabled(true);
+        } else {
+            // Show rationale and request permission.
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 2);
+        }
 
-        // Move the camera to the center of Toronto
-        LatLng toronto = new LatLng(43.6532, -79.3832);
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(toronto));
-        mMap.animateCamera(CameraUpdateFactory.zoomTo( 12.0f ));
+        mMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener(){
+            @Override
+            public boolean onMyLocationButtonClick() {
+                if (ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                        == PackageManager.PERMISSION_GRANTED) {
+                    Location loc = LocationServices.FusedLocationApi.getLastLocation(
+                            mGoogleApiClient);
+                    if (loc != null) {
+                        LatLng coordinate = new LatLng(loc.getLatitude(), loc.getLongitude());
+                        CameraUpdate location = CameraUpdateFactory.newLatLngZoom(
+                                coordinate, 16);
+                        mMap.animateCamera(location);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            }
+        });
+
+          LatLng toronto = new LatLng(43.6532, -79.3832);
+
+          CameraUpdate location = CameraUpdateFactory.newLatLngZoom(toronto, 12);
+          mMap.moveCamera(CameraUpdateFactory.newLatLng(toronto));
+          mMap.animateCamera(location);
 
         /*
         parsing all the csv files and getting the coordinates from each data set
@@ -209,6 +303,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             for(int i = 0; i < theftOversCoordinates.size(); i++) {
                 MyItem item = new MyItem(theftOversCoordinates.get(i)[1], theftOversCoordinates.get(i)[0]);
                 theftOverClusterManager.addItem(item);
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == 2) {
+            if (permissions.length == 1 &&
+                    permissions[0] == android.Manifest.permission.ACCESS_FINE_LOCATION &&
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                        == PackageManager.PERMISSION_GRANTED) {
+                    mMap.setMyLocationEnabled(true);
+                }
+            } else {
+                // Permission was denied. Display an error message.
             }
         }
     }
