@@ -25,10 +25,14 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.TileOverlay;
+import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.maps.android.clustering.Cluster;
 import com.google.maps.android.clustering.ClusterItem;
 import com.google.maps.android.clustering.ClusterManager;
 import com.google.maps.android.clustering.view.DefaultClusterRenderer;
+import com.google.maps.android.heatmaps.HeatmapTileProvider;
+import com.google.maps.android.heatmaps.WeightedLatLng;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -48,6 +52,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ClusterManager<MyItem> sexAssaultClusterManager;
     private ClusterManager<MyItem> shootingClusterManager;
     private ClusterManager<MyItem> theftOverClusterManager;
+
+    private static boolean heatMap = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,93 +85,131 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.moveCamera(CameraUpdateFactory.newLatLng(toronto));
         mMap.animateCamera(CameraUpdateFactory.zoomTo( 12.0f ));
 
-        // Initialize the cluster managers with the context and the map.
-        assaultClusterManager = new ClusterManager<MyItem>(this, mMap);
-        autoTheftClusterManager = new ClusterManager<MyItem>(this, mMap);
-        homicideClusterManager = new ClusterManager<MyItem>(this, mMap);
-        robberyClusterManager = new ClusterManager<MyItem>(this, mMap);
-        sexAssaultClusterManager = new ClusterManager<MyItem>(this, mMap);
-        shootingClusterManager = new ClusterManager<MyItem>(this, mMap);
-        theftOverClusterManager = new ClusterManager<MyItem>(this, mMap);
-
-        //Set custom renderers for each cluster manager in order to display custom icons
-        assaultClusterManager.setRenderer(new AssaultIconRendered(this, mMap, assaultClusterManager));
-        autoTheftClusterManager.setRenderer(new AutoTheftIconRendered(this, mMap, autoTheftClusterManager));
-        homicideClusterManager.setRenderer(new HomicideIconRendered(this, mMap, homicideClusterManager));
-        robberyClusterManager.setRenderer(new RobberyIconRendered(this, mMap, robberyClusterManager));
-        sexAssaultClusterManager.setRenderer(new SexAssaultIconRendered(this, mMap, sexAssaultClusterManager));
-        shootingClusterManager.setRenderer(new ShootingIconRendered(this, mMap, shootingClusterManager));
-        theftOverClusterManager.setRenderer(new TheftOverIconRendered(this, mMap, theftOverClusterManager));
-
-
-        // Point the map's listeners at the listeners implemented by the cluster managers
-        mMap.setOnCameraIdleListener(new GoogleMap.OnCameraIdleListener() {
-            @Override
-            public void onCameraIdle() {
-                assaultClusterManager.onCameraIdle();
-                autoTheftClusterManager.onCameraIdle();
-                homicideClusterManager.onCameraIdle();
-                robberyClusterManager.onCameraIdle();
-                sexAssaultClusterManager.onCameraIdle();
-                shootingClusterManager.onCameraIdle();
-                theftOverClusterManager.onCameraIdle();
-            }
-        });
-
-        //reading data from csv and feeding it to the assault cluster manager
+        /*
+        parsing all the csv files and getting the coordinates from each data set
+         */
         List<String[]> assaults = getCsvData("assault.csv");
-        List<Double[]> assaultCoordinates = getParsedCoordinates(assaults, 0);
-        for(int i = 0; i < assaultCoordinates.size(); i++) {
-            MyItem item = new MyItem(assaultCoordinates.get(i)[1], assaultCoordinates.get(i)[0]);
-            assaultClusterManager.addItem(item);
-        }
-
-        //reading data from csv and feeding it to the auto theft cluster manager
         List<String[]> autoThefts = getCsvData("auto-theft.csv");
-        List<Double[]> autoTheftsCoordinates = getParsedCoordinates(autoThefts, 0);
-        for(int i = 0; i < autoTheftsCoordinates.size(); i++) {
-            MyItem item = new MyItem(autoTheftsCoordinates.get(i)[1], autoTheftsCoordinates.get(i)[0]);
-            autoTheftClusterManager.addItem(item);
-        }
-
-        //reading data from csv and feeding it to the homicides cluster manager
         List<String[]> homicides = getCsvData("homicide.csv");
-        List<Double[]> homicidesCoordinates = getParsedCoordinates(homicides, 0);
-        for(int i = 0; i < homicidesCoordinates.size(); i++) {
-            MyItem item = new MyItem(homicidesCoordinates.get(i)[1], homicidesCoordinates.get(i)[0]);
-            homicideClusterManager.addItem(item);
-        }
-
-        //reading data from csv and feeding it to the robbery cluster manager
         List<String[]> robberies = getCsvData("robbery.csv");
-        List<Double[]> robberiesCoordinates = getParsedCoordinates(robberies, 0);
-        for(int i = 0; i < robberiesCoordinates.size(); i++) {
-            MyItem item = new MyItem(robberiesCoordinates.get(i)[1], robberiesCoordinates.get(i)[0]);
-            robberyClusterManager.addItem(item);
-        }
-
-        //reading data from csv and feeding it to the sexual assault cluster manager
         List<String[]> sexualAssaults = getCsvData("sexual-assault.csv");
-        List<Double[]> sexualAssaultsCoordinates = getParsedCoordinates(sexualAssaults, 0);
-        for(int i = 0; i < sexualAssaultsCoordinates.size(); i++) {
-            MyItem item = new MyItem(sexualAssaultsCoordinates.get(i)[1], sexualAssaultsCoordinates.get(i)[0]);
-            sexAssaultClusterManager.addItem(item);
-        }
-
-        //reading data from csv and feeding it to the shooting cluster manager
         List<String[]> shootings = getCsvData("shooting.csv");
-        List<Double[]> shootingsCoordinates = getParsedCoordinates(shootings, 0);
-        for(int i = 0; i < shootingsCoordinates.size(); i++) {
-            MyItem item = new MyItem(shootingsCoordinates.get(i)[1], shootingsCoordinates.get(i)[0]);
-            shootingClusterManager.addItem(item);
-        }
-
-        //reading data from csv and feeding it to the theft over cluster manager
         List<String[]> theftOvers = getCsvData("theft-over.csv");
+        List<Double[]> assaultCoordinates = getParsedCoordinates(assaults, 0);
+        List<Double[]> autoTheftsCoordinates = getParsedCoordinates(autoThefts, 0);
+        List<Double[]> homicidesCoordinates = getParsedCoordinates(homicides, 0);
+        List<Double[]> robberiesCoordinates = getParsedCoordinates(robberies, 0);
+        List<Double[]> sexualAssaultsCoordinates = getParsedCoordinates(sexualAssaults, 0);
+        List<Double[]> shootingsCoordinates = getParsedCoordinates(shootings, 0);
         List<Double[]> theftOversCoordinates = getParsedCoordinates(theftOvers, 0);
-        for(int i = 0; i < theftOversCoordinates.size(); i++) {
-            MyItem item = new MyItem(theftOversCoordinates.get(i)[1], theftOversCoordinates.get(i)[0]);
-            theftOverClusterManager.addItem(item);
+
+        /* if heatMap is selected */
+        if(heatMap) {
+            ArrayList<WeightedLatLng> list = new ArrayList<WeightedLatLng>();
+            for(int i = 0; i < assaultCoordinates.size(); i++) {
+                list.add(new WeightedLatLng(new LatLng(assaultCoordinates.get(i)[1], assaultCoordinates.get(i)[0]), 10.0));
+            }
+            for(int i = 0; i < autoTheftsCoordinates.size(); i++) {
+                list.add(new WeightedLatLng(new LatLng(autoTheftsCoordinates.get(i)[1], autoTheftsCoordinates.get(i)[0]), 10.0));
+            }
+            for(int i = 0; i < homicidesCoordinates.size(); i++) {
+                list.add(new WeightedLatLng(new LatLng(homicidesCoordinates.get(i)[1], homicidesCoordinates.get(i)[0]), 10.0));
+            }
+            for(int i = 0; i < robberiesCoordinates.size(); i++) {
+                list.add(new WeightedLatLng(new LatLng(robberiesCoordinates.get(i)[1], robberiesCoordinates.get(i)[0]), 10.0));
+            }
+            for(int i = 0; i < sexualAssaultsCoordinates.size(); i++) {
+                list.add(new WeightedLatLng(new LatLng(sexualAssaultsCoordinates.get(i)[1], sexualAssaultsCoordinates.get(i)[0]), 10.0));
+            }
+            for(int i = 0; i < shootingsCoordinates.size(); i++) {
+                list.add(new WeightedLatLng(new LatLng(shootingsCoordinates.get(i)[1], shootingsCoordinates.get(i)[0]), 10.0));
+            }
+            for(int i = 0; i < theftOversCoordinates.size(); i++) {
+                list.add(new WeightedLatLng(new LatLng(theftOversCoordinates.get(i)[1], theftOversCoordinates.get(i)[0]), 10.0));
+            }
+            // Create a heat map tile provider, passing it the latlngs of the police stations.
+            HeatmapTileProvider mProvider = new HeatmapTileProvider.Builder()
+                    .radius(30)
+                    .weightedData(list)
+                    .build();
+            // Add a tile overlay to the map, using the heat map tile provider.
+            TileOverlay mOverlay = mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
+          /* Heat Map is not selected, displaying regular icons and clusters */
+        } else {
+            // Initialize the cluster managers with the context and the map.
+            assaultClusterManager = new ClusterManager<MyItem>(this, mMap);
+            autoTheftClusterManager = new ClusterManager<MyItem>(this, mMap);
+            homicideClusterManager = new ClusterManager<MyItem>(this, mMap);
+            robberyClusterManager = new ClusterManager<MyItem>(this, mMap);
+            sexAssaultClusterManager = new ClusterManager<MyItem>(this, mMap);
+            shootingClusterManager = new ClusterManager<MyItem>(this, mMap);
+            theftOverClusterManager = new ClusterManager<MyItem>(this, mMap);
+
+            //Set custom renderers for each cluster manager in order to display custom icons
+            assaultClusterManager.setRenderer(new AssaultIconRendered(this, mMap, assaultClusterManager));
+            autoTheftClusterManager.setRenderer(new AutoTheftIconRendered(this, mMap, autoTheftClusterManager));
+            homicideClusterManager.setRenderer(new HomicideIconRendered(this, mMap, homicideClusterManager));
+            robberyClusterManager.setRenderer(new RobberyIconRendered(this, mMap, robberyClusterManager));
+            sexAssaultClusterManager.setRenderer(new SexAssaultIconRendered(this, mMap, sexAssaultClusterManager));
+            shootingClusterManager.setRenderer(new ShootingIconRendered(this, mMap, shootingClusterManager));
+            theftOverClusterManager.setRenderer(new TheftOverIconRendered(this, mMap, theftOverClusterManager));
+
+
+            // Point the map's listeners at the listeners implemented by the cluster managers
+            mMap.setOnCameraIdleListener(new GoogleMap.OnCameraIdleListener() {
+                @Override
+                public void onCameraIdle() {
+                    assaultClusterManager.onCameraIdle();
+                    autoTheftClusterManager.onCameraIdle();
+                    homicideClusterManager.onCameraIdle();
+                    robberyClusterManager.onCameraIdle();
+                    sexAssaultClusterManager.onCameraIdle();
+                    shootingClusterManager.onCameraIdle();
+                    theftOverClusterManager.onCameraIdle();
+                }
+            });
+
+            //feeding the assault cluster manager with the parsed data
+            for(int i = 0; i < assaultCoordinates.size(); i++) {
+                MyItem item = new MyItem(assaultCoordinates.get(i)[1], assaultCoordinates.get(i)[0]);
+                assaultClusterManager.addItem(item);
+            }
+
+            //feeding the auto theft cluster manager with the parsed data
+            for(int i = 0; i < autoTheftsCoordinates.size(); i++) {
+                MyItem item = new MyItem(autoTheftsCoordinates.get(i)[1], autoTheftsCoordinates.get(i)[0]);
+                autoTheftClusterManager.addItem(item);
+            }
+
+            //feeding the homicides cluster manager with the parsed data
+            for(int i = 0; i < homicidesCoordinates.size(); i++) {
+                MyItem item = new MyItem(homicidesCoordinates.get(i)[1], homicidesCoordinates.get(i)[0]);
+                homicideClusterManager.addItem(item);
+            }
+
+            //feeding the robberies cluster manager with the parsed data
+            for(int i = 0; i < robberiesCoordinates.size(); i++) {
+                MyItem item = new MyItem(robberiesCoordinates.get(i)[1], robberiesCoordinates.get(i)[0]);
+                robberyClusterManager.addItem(item);
+            }
+
+            //feeding the sexual assault cluster manager with the parsed data
+            for(int i = 0; i < sexualAssaultsCoordinates.size(); i++) {
+                MyItem item = new MyItem(sexualAssaultsCoordinates.get(i)[1], sexualAssaultsCoordinates.get(i)[0]);
+                sexAssaultClusterManager.addItem(item);
+            }
+
+            //feeding the shootings cluster manager with the parsed data
+            for(int i = 0; i < shootingsCoordinates.size(); i++) {
+                MyItem item = new MyItem(shootingsCoordinates.get(i)[1], shootingsCoordinates.get(i)[0]);
+                shootingClusterManager.addItem(item);
+            }
+
+            //feeding the theft over cluster manager with the parsed data
+            for(int i = 0; i < theftOversCoordinates.size(); i++) {
+                MyItem item = new MyItem(theftOversCoordinates.get(i)[1], theftOversCoordinates.get(i)[0]);
+                theftOverClusterManager.addItem(item);
+            }
         }
     }
 
