@@ -6,36 +6,36 @@
         <item
             android:id="@+id/cb_assault"
             android:icon="@drawable/assault"
-            app:actionLayout="@layout/action_view_switch"
+            app:actionLayout="@layout/action_view_checkbox"
             android:title="Assault" />
         <item
             android:id="@+id/cb_autoTheft"
             android:icon="@drawable/car_theft_1"
-            app:actionLayout="@layout/action_view_switch"
+            app:actionLayout="@layout/action_view_checkbox"
             android:title="Auto Theft" />
         <item
-            android:id="@+id/cb_homocide"
+            android:id="@+id/cb_homicide"
             android:icon="@drawable/homicide"
-            app:actionLayout="@layout/action_view_switch"
-            android:title="Homocide" />
+            app:actionLayout="@layout/action_view_checkbox"
+            android:title="Homicide" />
         <item
             android:id="@+id/cb_robbery"
             android:icon="@drawable/robbery"
-            app:actionLayout="@layout/action_view_switch"
+            app:actionLayout="@layout/action_view_checkbox"
             android:title="Robbery" />
         <item
             android:id="@+id/cb_sexAssault"
-            app:actionLayout="@layout/action_view_switch"
+            app:actionLayout="@layout/action_view_checkbox"
             android:icon="@drawable/sexual_assault"
             android:title="Sex Assault" />
         <item
             android:id="@+id/cb_shooting"
-            app:actionLayout="@layout/action_view_switch"
+            app:actionLayout="@layout/action_view_checkbox"
             android:icon="@drawable/gun"
             android:title="Shooting" />
         <item
             android:id="@+id/cb_theftOver"
-            app:actionLayout="@layout/action_view_switch"
+            app:actionLayout="@layout/action_view_checkbox"
             android:icon="@drawable/theft_over"
             android:title="Theft Over" />
     </group>
@@ -44,7 +44,7 @@
         <menu>
             <item
              android:id="@+id/cb_heatMap"
-             app:actionLayout="@layout/action_view_switch"
+             app:actionLayout="@layout/action_view_checkbox"
              android:icon="@drawable/heat_map"
              android:title="Heat Map" />
         </menu>

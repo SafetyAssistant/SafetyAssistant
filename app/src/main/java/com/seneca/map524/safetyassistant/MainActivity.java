@@ -23,12 +23,9 @@ import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
-import android.support.v7.widget.SwitchCompat;
-import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.Toast;
@@ -89,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         preferences = this.getSharedPreferences(PREF_FILE_NAME, Context.MODE_PRIVATE);
         boolean assault_check_state = preferences.getBoolean("assault", false);
         boolean auto_theft_check_state = preferences.getBoolean("autoTheft", false);
-        boolean homocide_check_state = preferences.getBoolean("homocide", false);
+        boolean homicide_check_state = preferences.getBoolean("homicide", false);
         boolean robbery_check_state = preferences.getBoolean("robbery", false);
         boolean sex_assault_check_state = preferences.getBoolean("sexAssault", false);
         boolean shooting_check_state = preferences.getBoolean("shooting", false);
@@ -117,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         Menu menu = navigationView.getMenu();
 
-        CheckBox cb_assault =(CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_assault)).findViewById(R.id.action_view_sc);
+        CheckBox cb_assault =(CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_assault)).findViewById(R.id.action_view_cb);
 
         cb_assault.setChecked(assault_check_state);
 
@@ -137,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-        final CheckBox cb_autoTheft = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_autoTheft)).findViewById(R.id.action_view_sc);
+        final CheckBox cb_autoTheft = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_autoTheft)).findViewById(R.id.action_view_cb);
 
         cb_autoTheft.setChecked(auto_theft_check_state);
 
@@ -157,15 +154,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-        CheckBox cb_homocide = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_homocide)).findViewById(R.id.action_view_sc);
+        CheckBox cb_homocide = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_homicide)).findViewById(R.id.action_view_cb);
 
-        cb_homocide.setChecked(homocide_check_state);
+        cb_homocide.setChecked(homicide_check_state);
 
         cb_homocide.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 
-                editor.putBoolean("homocide", isChecked);
+                editor.putBoolean("homicide", isChecked);
                 editor.commit();
 
                 if (isChecked){
@@ -177,7 +174,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-        CheckBox cb_robbery = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_robbery)).findViewById(R.id.action_view_sc);
+        CheckBox cb_robbery = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_robbery)).findViewById(R.id.action_view_cb);
 
         cb_robbery.setChecked(robbery_check_state);
 
@@ -197,7 +194,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-        CheckBox cb_sexAssault = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_sexAssault)).findViewById(R.id.action_view_sc);
+        CheckBox cb_sexAssault = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_sexAssault)).findViewById(R.id.action_view_cb);
 
         cb_sexAssault.setChecked(sex_assault_check_state);
 
@@ -217,7 +214,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-        CheckBox cb_shooting = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_shooting)).findViewById(R.id.action_view_sc);
+        CheckBox cb_shooting = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_shooting)).findViewById(R.id.action_view_cb);
 
         cb_shooting.setChecked(shooting_check_state);
 
@@ -237,7 +234,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-        CheckBox cb_theftOver = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_theftOver)).findViewById(R.id.action_view_sc);
+        CheckBox cb_theftOver = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_theftOver)).findViewById(R.id.action_view_cb);
 
         cb_theftOver.setChecked(theft_over_check_state);
 
@@ -257,7 +254,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-        CheckBox cb_heatMap =(CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_heatMap)).findViewById(R.id.action_view_sc);
+        CheckBox cb_heatMap =(CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_heatMap)).findViewById(R.id.action_view_cb);
 
         cb_heatMap.setChecked(heat_map_check_state);
 
