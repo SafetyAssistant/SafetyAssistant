@@ -3,6 +3,7 @@ package com.seneca.map524.safetyassistant;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -14,13 +15,23 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.location.Location;
 import android.os.Bundle;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
+import android.support.v7.widget.SwitchCompat;
+import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -65,10 +76,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private static boolean heatMap = false;
 
+    private SharedPreferences preferences ;
+    private SharedPreferences.Editor editor;
+    private static final String PREF_FILE_NAME = "LegendCheckBoxPref";
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        preferences = this.getSharedPreferences(PREF_FILE_NAME, Context.MODE_PRIVATE);
+        boolean assault_check_state = preferences.getBoolean("assault", false);
+        boolean auto_theft_check_state = preferences.getBoolean("autoTheft", false);
+        boolean homocide_check_state = preferences.getBoolean("homocide", false);
+        boolean robbery_check_state = preferences.getBoolean("robbery", false);
+        boolean sex_assault_check_state = preferences.getBoolean("sexAssault", false);
+        boolean shooting_check_state = preferences.getBoolean("shooting", false);
+        boolean theft_over_check_state = preferences.getBoolean("theftOver", false);
+        boolean heat_map_check_state = preferences.getBoolean("heatMap", false);
+
+        editor = preferences.edit();
+
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -83,6 +113,184 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     .build();
         }
 
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+
+        Menu menu = navigationView.getMenu();
+
+        CheckBox cb_assault =(CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_assault)).findViewById(R.id.action_view_sc);
+
+        cb_assault.setChecked(assault_check_state);
+
+        cb_assault.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+                editor.putBoolean("assault", isChecked);
+                editor.commit();
+
+                if (isChecked){
+
+                }
+                else {
+
+                }
+            }
+        });
+
+        final CheckBox cb_autoTheft = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_autoTheft)).findViewById(R.id.action_view_sc);
+
+        cb_autoTheft.setChecked(auto_theft_check_state);
+
+        cb_autoTheft.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+                editor.putBoolean("autoTheft", isChecked);
+                editor.commit();
+
+                if (isChecked){
+
+                }
+                else {
+
+                }
+            }
+        });
+
+        CheckBox cb_homocide = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_homocide)).findViewById(R.id.action_view_sc);
+
+        cb_homocide.setChecked(homocide_check_state);
+
+        cb_homocide.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+                editor.putBoolean("homocide", isChecked);
+                editor.commit();
+
+                if (isChecked){
+
+                }
+                else {
+
+                }
+            }
+        });
+
+        CheckBox cb_robbery = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_robbery)).findViewById(R.id.action_view_sc);
+
+        cb_robbery.setChecked(robbery_check_state);
+
+        cb_robbery.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+                editor.putBoolean("robbery", isChecked);
+                editor.commit();
+
+                if (isChecked){
+
+                }
+                else {
+
+                }
+            }
+        });
+
+        CheckBox cb_sexAssault = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_sexAssault)).findViewById(R.id.action_view_sc);
+
+        cb_sexAssault.setChecked(sex_assault_check_state);
+
+        cb_sexAssault.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+                editor.putBoolean("sexAssault", isChecked);
+                editor.commit();
+
+                if (isChecked){
+
+                }
+                else {
+
+                }
+            }
+        });
+
+        CheckBox cb_shooting = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_shooting)).findViewById(R.id.action_view_sc);
+
+        cb_shooting.setChecked(shooting_check_state);
+
+        cb_shooting.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+                editor.putBoolean("shooting", isChecked);
+                editor.commit();
+
+                if (isChecked){
+
+                }
+                else {
+
+                }
+            }
+        });
+
+        CheckBox cb_theftOver = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_theftOver)).findViewById(R.id.action_view_sc);
+
+        cb_theftOver.setChecked(theft_over_check_state);
+
+        cb_theftOver.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+                editor.putBoolean("theftOver", isChecked);
+                editor.commit();
+
+                if (isChecked){
+
+                }
+                else {
+
+                }
+            }
+        });
+
+        CheckBox cb_heatMap =(CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_heatMap)).findViewById(R.id.action_view_sc);
+
+        cb_heatMap.setChecked(heat_map_check_state);
+
+        cb_heatMap.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+                editor.putBoolean("heatMap", isChecked);
+                editor.commit();
+
+                if (isChecked) {
+                    heatMap = true;
+                    Toast.makeText(MainActivity.this, "HEAT MAP ON", Toast.LENGTH_SHORT).show();
+
+                }
+                else {
+                    heatMap = false;
+                    Toast.makeText(MainActivity.this, "HEAT MAP OFF", Toast.LENGTH_SHORT).show();
+
+                }
+            }
+        });
+
+    }
+
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
     }
 
     protected void onStart() {
@@ -230,6 +438,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             TileOverlay mOverlay = mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
           /* Heat Map is not selected, displaying regular icons and clusters */
         } else {
+
             // Initialize the cluster managers with the context and the map.
             assaultClusterManager = new ClusterManager<MyItem>(this, mMap);
             autoTheftClusterManager = new ClusterManager<MyItem>(this, mMap);
