@@ -55,13 +55,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private GoogleMap mMap;
     GoogleApiClient mGoogleApiClient;
     LatLng startLocation;
-    private ClusterManager<MyItem> assaultClusterManager;
-    private ClusterManager<MyItem> autoTheftClusterManager;
-    private ClusterManager<MyItem> homicideClusterManager;
-    private ClusterManager<MyItem> robberyClusterManager;
-    private ClusterManager<MyItem> sexAssaultClusterManager;
-    private ClusterManager<MyItem> shootingClusterManager;
-    private ClusterManager<MyItem> theftOverClusterManager;
+
+    private ClusterManager<MyItem> clusterManager;
+
+    List<String[]> assaults;
+    List<String[]> autoThefts;
+    List<String[]> homicides;
+    List<String[]> robberies;
+    List<String[]> sexualAssaults;
+    List<String[]> shootings;
+    List<String[]> theftOvers;
+    List<Double[]> assaultCoordinates;
+    List<Double[]> autoTheftsCoordinates;
+    List<Double[]> homicidesCoordinates;
+    List<Double[]> robberiesCoordinates;
+    List<Double[]> sexualAssaultsCoordinates;
+    List<Double[]> shootingsCoordinates;
+    List<Double[]> theftOversCoordinates;
 
     private static boolean heatMap = false;
 
@@ -151,6 +161,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 2);
         }
 
+        //Listener for the 'Jump to My Location' button
         mMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener(){
             @Override
             public boolean onMyLocationButtonClick() {
@@ -173,138 +184,36 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-          LatLng toronto = new LatLng(43.6532, -79.3832);
+        LatLng toronto = new LatLng(43.6532, -79.3832);
 
-          CameraUpdate location = CameraUpdateFactory.newLatLngZoom(toronto, 12);
-          mMap.moveCamera(CameraUpdateFactory.newLatLng(toronto));
-          mMap.animateCamera(location);
+        CameraUpdate location = CameraUpdateFactory.newLatLngZoom(toronto, 12);
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(toronto));
+        mMap.animateCamera(location);
 
         /*
         parsing all the csv files and getting the coordinates from each data set
          */
-        List<String[]> assaults = getCsvData("assault.csv");
-        List<String[]> autoThefts = getCsvData("auto-theft.csv");
-        List<String[]> homicides = getCsvData("homicide.csv");
-        List<String[]> robberies = getCsvData("robbery.csv");
-        List<String[]> sexualAssaults = getCsvData("sexual-assault.csv");
-        List<String[]> shootings = getCsvData("shooting.csv");
-        List<String[]> theftOvers = getCsvData("theft-over.csv");
-        List<Double[]> assaultCoordinates = getParsedCoordinates(assaults, 0);
-        List<Double[]> autoTheftsCoordinates = getParsedCoordinates(autoThefts, 0);
-        List<Double[]> homicidesCoordinates = getParsedCoordinates(homicides, 0);
-        List<Double[]> robberiesCoordinates = getParsedCoordinates(robberies, 0);
-        List<Double[]> sexualAssaultsCoordinates = getParsedCoordinates(sexualAssaults, 0);
-        List<Double[]> shootingsCoordinates = getParsedCoordinates(shootings, 0);
-        List<Double[]> theftOversCoordinates = getParsedCoordinates(theftOvers, 0);
+        assaults = getCsvData("assault.csv");
+        autoThefts = getCsvData("auto-theft.csv");
+        homicides = getCsvData("homicide.csv");
+        robberies = getCsvData("robbery.csv");
+        sexualAssaults = getCsvData("sexual-assault.csv");
+        shootings = getCsvData("shooting.csv");
+        theftOvers = getCsvData("theft-over.csv");
+        assaultCoordinates = getParsedCoordinates(assaults, 0);
+        autoTheftsCoordinates = getParsedCoordinates(autoThefts, 0);
+        homicidesCoordinates = getParsedCoordinates(homicides, 0);
+        robberiesCoordinates = getParsedCoordinates(robberies, 0);
+        sexualAssaultsCoordinates = getParsedCoordinates(sexualAssaults, 0);
+        shootingsCoordinates = getParsedCoordinates(shootings, 0);
+        theftOversCoordinates = getParsedCoordinates(theftOvers, 0);
 
-        /* if heatMap is selected */
-        if(heatMap) {
-            ArrayList<WeightedLatLng> list = new ArrayList<WeightedLatLng>();
-            for(int i = 0; i < assaultCoordinates.size(); i++) {
-                list.add(new WeightedLatLng(new LatLng(assaultCoordinates.get(i)[1], assaultCoordinates.get(i)[0]), 10.0));
-            }
-            for(int i = 0; i < autoTheftsCoordinates.size(); i++) {
-                list.add(new WeightedLatLng(new LatLng(autoTheftsCoordinates.get(i)[1], autoTheftsCoordinates.get(i)[0]), 10.0));
-            }
-            for(int i = 0; i < homicidesCoordinates.size(); i++) {
-                list.add(new WeightedLatLng(new LatLng(homicidesCoordinates.get(i)[1], homicidesCoordinates.get(i)[0]), 10.0));
-            }
-            for(int i = 0; i < robberiesCoordinates.size(); i++) {
-                list.add(new WeightedLatLng(new LatLng(robberiesCoordinates.get(i)[1], robberiesCoordinates.get(i)[0]), 10.0));
-            }
-            for(int i = 0; i < sexualAssaultsCoordinates.size(); i++) {
-                list.add(new WeightedLatLng(new LatLng(sexualAssaultsCoordinates.get(i)[1], sexualAssaultsCoordinates.get(i)[0]), 10.0));
-            }
-            for(int i = 0; i < shootingsCoordinates.size(); i++) {
-                list.add(new WeightedLatLng(new LatLng(shootingsCoordinates.get(i)[1], shootingsCoordinates.get(i)[0]), 10.0));
-            }
-            for(int i = 0; i < theftOversCoordinates.size(); i++) {
-                list.add(new WeightedLatLng(new LatLng(theftOversCoordinates.get(i)[1], theftOversCoordinates.get(i)[0]), 10.0));
-            }
-            // Create a heat map tile provider, passing it the latlngs of the police stations.
-            HeatmapTileProvider mProvider = new HeatmapTileProvider.Builder()
-                    .radius(30)
-                    .weightedData(list)
-                    .build();
-            // Add a tile overlay to the map, using the heat map tile provider.
-            TileOverlay mOverlay = mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
-          /* Heat Map is not selected, displaying regular icons and clusters */
-        } else {
-            // Initialize the cluster managers with the context and the map.
-            assaultClusterManager = new ClusterManager<MyItem>(this, mMap);
-            autoTheftClusterManager = new ClusterManager<MyItem>(this, mMap);
-            homicideClusterManager = new ClusterManager<MyItem>(this, mMap);
-            robberyClusterManager = new ClusterManager<MyItem>(this, mMap);
-            sexAssaultClusterManager = new ClusterManager<MyItem>(this, mMap);
-            shootingClusterManager = new ClusterManager<MyItem>(this, mMap);
-            theftOverClusterManager = new ClusterManager<MyItem>(this, mMap);
+        // Initialize the cluster managers with the context and the map.
+        clusterManager = new ClusterManager<MyItem>(this, mMap);
+        clusterManager.setRenderer(new CrimeIconRendered(this, mMap, clusterManager));
+        mMap.setOnCameraIdleListener(clusterManager);
 
-            //Set custom renderers for each cluster manager in order to display custom icons
-            assaultClusterManager.setRenderer(new AssaultIconRendered(this, mMap, assaultClusterManager));
-            autoTheftClusterManager.setRenderer(new AutoTheftIconRendered(this, mMap, autoTheftClusterManager));
-            homicideClusterManager.setRenderer(new HomicideIconRendered(this, mMap, homicideClusterManager));
-            robberyClusterManager.setRenderer(new RobberyIconRendered(this, mMap, robberyClusterManager));
-            sexAssaultClusterManager.setRenderer(new SexAssaultIconRendered(this, mMap, sexAssaultClusterManager));
-            shootingClusterManager.setRenderer(new ShootingIconRendered(this, mMap, shootingClusterManager));
-            theftOverClusterManager.setRenderer(new TheftOverIconRendered(this, mMap, theftOverClusterManager));
-
-
-            // Point the map's listeners at the listeners implemented by the cluster managers
-            mMap.setOnCameraIdleListener(new GoogleMap.OnCameraIdleListener() {
-                @Override
-                public void onCameraIdle() {
-                    assaultClusterManager.onCameraIdle();
-                    autoTheftClusterManager.onCameraIdle();
-                    homicideClusterManager.onCameraIdle();
-                    robberyClusterManager.onCameraIdle();
-                    sexAssaultClusterManager.onCameraIdle();
-                    shootingClusterManager.onCameraIdle();
-                    theftOverClusterManager.onCameraIdle();
-                }
-            });
-
-            //feeding the assault cluster manager with the parsed data
-            for(int i = 0; i < assaultCoordinates.size(); i++) {
-                MyItem item = new MyItem(assaultCoordinates.get(i)[1], assaultCoordinates.get(i)[0]);
-                assaultClusterManager.addItem(item);
-            }
-
-            //feeding the auto theft cluster manager with the parsed data
-            for(int i = 0; i < autoTheftsCoordinates.size(); i++) {
-                MyItem item = new MyItem(autoTheftsCoordinates.get(i)[1], autoTheftsCoordinates.get(i)[0]);
-                autoTheftClusterManager.addItem(item);
-            }
-
-            //feeding the homicides cluster manager with the parsed data
-            for(int i = 0; i < homicidesCoordinates.size(); i++) {
-                MyItem item = new MyItem(homicidesCoordinates.get(i)[1], homicidesCoordinates.get(i)[0]);
-                homicideClusterManager.addItem(item);
-            }
-
-            //feeding the robberies cluster manager with the parsed data
-            for(int i = 0; i < robberiesCoordinates.size(); i++) {
-                MyItem item = new MyItem(robberiesCoordinates.get(i)[1], robberiesCoordinates.get(i)[0]);
-                robberyClusterManager.addItem(item);
-            }
-
-            //feeding the sexual assault cluster manager with the parsed data
-            for(int i = 0; i < sexualAssaultsCoordinates.size(); i++) {
-                MyItem item = new MyItem(sexualAssaultsCoordinates.get(i)[1], sexualAssaultsCoordinates.get(i)[0]);
-                sexAssaultClusterManager.addItem(item);
-            }
-
-            //feeding the shootings cluster manager with the parsed data
-            for(int i = 0; i < shootingsCoordinates.size(); i++) {
-                MyItem item = new MyItem(shootingsCoordinates.get(i)[1], shootingsCoordinates.get(i)[0]);
-                shootingClusterManager.addItem(item);
-            }
-
-            //feeding the theft over cluster manager with the parsed data
-            for(int i = 0; i < theftOversCoordinates.size(); i++) {
-                MyItem item = new MyItem(theftOversCoordinates.get(i)[1], theftOversCoordinates.get(i)[0]);
-                theftOverClusterManager.addItem(item);
-            }
-        }
+        updateMapWithData();
     }
 
     @Override
@@ -402,185 +311,122 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     //helper class needed to set clustering for the map markers
     public class MyItem implements ClusterItem {
         private final LatLng mPosition;
-
-        public MyItem(double lat, double lng) {
+        private int picture;
+        public MyItem(double lat, double lng, int pictureResource) {
             mPosition = new LatLng(lat, lng);
+            picture = pictureResource;
         }
 
         @Override
         public LatLng getPosition() {
             return mPosition;
         }
-    }
-
-    /*
-    This class implements custom icons for assault markers
-    as well as custom icons for their Clusters
-     */
-    class AssaultIconRendered extends DefaultClusterRenderer<MyItem> {
-
-        public AssaultIconRendered(Context context, GoogleMap map, ClusterManager<MyItem> clusterManager) {
-            super(context, map, clusterManager);
-        }
-
-        @Override
-        protected void onBeforeClusterItemRendered(MyItem item, MarkerOptions markerOptions) {
-            markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.assault));
-            super.onBeforeClusterItemRendered(item, markerOptions);
-        }
-        @Override
-        protected void onBeforeClusterRendered(Cluster<MyItem> cluster, MarkerOptions markerOptions) {
-
-//            Context mContext = getApplicationContext();
-//            final Drawable clusterIcon = ContextCompat.getDrawable(mContext, R.drawable.assault);
-//            //final Drawable clusterIcon = getResources().getDrawable(R.drawable.assault);
-//
-//            IconGenerator mClusterIconGenerator = new IconGenerator(mContext);
-//            clusterIcon.setColorFilter(getResources().getColor(android.R.color.holo_orange_light), PorterDuff.Mode.SRC_ATOP);
-//            mClusterIconGenerator.setBackground(clusterIcon);
-//
-//            //modify padding for one or two digit numbers
-//            if (cluster.getSize() < 10) {
-//                mClusterIconGenerator.setContentPadding(40, 20, 0, 0);
-//            }
-//            else {
-//                mClusterIconGenerator.setContentPadding(30, 20, 0, 0);
-//            }
-
-            Bitmap icon = drawTextToBitmap(R.drawable.assault,String.valueOf(cluster.getSize()) );
-            //mClusterIconGenerator.makeIcon(String.valueOf(cluster.getSize()));
-
-            markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icon));
-
-        }
-
-    }
-
-    /*
-    This class implements custom icons for auto theft markers
-    as well as custom icons for their Clusters
-     */
-    class AutoTheftIconRendered extends DefaultClusterRenderer<MyItem> {
-
-        public AutoTheftIconRendered(Context context, GoogleMap map, ClusterManager<MyItem> clusterManager) {
-            super(context, map, clusterManager);
-        }
-        @Override
-        protected void onBeforeClusterItemRendered(MyItem item, MarkerOptions markerOptions) {
-            markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.car_theft_1));
-            super.onBeforeClusterItemRendered(item, markerOptions);
-        }
-
-        @Override
-        protected void onBeforeClusterRendered(Cluster<MyItem> cluster, MarkerOptions markerOptions) {
-            Bitmap icon = drawTextToBitmap(R.drawable.car_theft_1, String.valueOf(cluster.getSize()) );
-            markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icon));
+        public int getPicture() {
+            return picture;
         }
     }
 
-    /*
-    This class implements custom icons for homicide markers
-    as well as custom icons for their Clusters
-     */
-    class HomicideIconRendered extends DefaultClusterRenderer<MyItem> {
+    public void updateMapWithData() {
+         /* if heatMap is selected */
+        if(heatMap) {
+            ArrayList<WeightedLatLng> list = new ArrayList<WeightedLatLng>();
+            for(int i = 0; i < assaultCoordinates.size(); i++) {
+                list.add(new WeightedLatLng(new LatLng(assaultCoordinates.get(i)[1], assaultCoordinates.get(i)[0]), 10.0));
+            }
+            for(int i = 0; i < autoTheftsCoordinates.size(); i++) {
+                list.add(new WeightedLatLng(new LatLng(autoTheftsCoordinates.get(i)[1], autoTheftsCoordinates.get(i)[0]), 10.0));
+            }
+            for(int i = 0; i < homicidesCoordinates.size(); i++) {
+                list.add(new WeightedLatLng(new LatLng(homicidesCoordinates.get(i)[1], homicidesCoordinates.get(i)[0]), 10.0));
+            }
+            for(int i = 0; i < robberiesCoordinates.size(); i++) {
+                list.add(new WeightedLatLng(new LatLng(robberiesCoordinates.get(i)[1], robberiesCoordinates.get(i)[0]), 10.0));
+            }
+            for(int i = 0; i < sexualAssaultsCoordinates.size(); i++) {
+                list.add(new WeightedLatLng(new LatLng(sexualAssaultsCoordinates.get(i)[1], sexualAssaultsCoordinates.get(i)[0]), 10.0));
+            }
+            for(int i = 0; i < shootingsCoordinates.size(); i++) {
+                list.add(new WeightedLatLng(new LatLng(shootingsCoordinates.get(i)[1], shootingsCoordinates.get(i)[0]), 10.0));
+            }
+            for(int i = 0; i < theftOversCoordinates.size(); i++) {
+                list.add(new WeightedLatLng(new LatLng(theftOversCoordinates.get(i)[1], theftOversCoordinates.get(i)[0]), 10.0));
+            }
+            // Create a heat map tile provider, passing it the latlngs of the police stations.
+            HeatmapTileProvider mProvider = new HeatmapTileProvider.Builder()
+                    .radius(30)
+                    .weightedData(list)
+                    .build();
+            // Add a tile overlay to the map, using the heat map tile provider.
+            TileOverlay mOverlay = mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
+          /* Heat Map is not selected, displaying regular icons and clusters */
+        } else {
+            clusterManager.clearItems();
 
-        public HomicideIconRendered(Context context, GoogleMap map, ClusterManager<MyItem> clusterManager) {
-            super(context, map, clusterManager);
-        }
-        @Override
-        protected void onBeforeClusterItemRendered(MyItem item, MarkerOptions markerOptions) {
-            markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.homicide));
-            super.onBeforeClusterItemRendered(item, markerOptions);
-        }
-        @Override
-        protected void onBeforeClusterRendered(Cluster<MyItem> cluster, MarkerOptions markerOptions) {
-            Bitmap icon = drawTextToBitmap(R.drawable.homicide, String.valueOf(cluster.getSize()) );
-            markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icon));
-        }
-    }
-    /*
-    This class implements custom icons for robbery markers
-    as well as custom icons for their Clusters
-     */
-    class RobberyIconRendered extends DefaultClusterRenderer<MyItem> {
+            //feeding the assault cluster manager with the parsed data
+            for(int i = 0; i < assaultCoordinates.size(); i++) {
+                MyItem item = new MyItem(assaultCoordinates.get(i)[1], assaultCoordinates.get(i)[0], R.drawable.assault);
+                clusterManager.addItem(item);
+            }
 
-        public RobberyIconRendered(Context context, GoogleMap map, ClusterManager<MyItem> clusterManager) {
-            super(context, map, clusterManager);
-        }
-        @Override
-        protected void onBeforeClusterItemRendered(MyItem item, MarkerOptions markerOptions) {
-            markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.robbery));
-            super.onBeforeClusterItemRendered(item, markerOptions);
-        }
-        @Override
-        protected void onBeforeClusterRendered(Cluster<MyItem> cluster, MarkerOptions markerOptions) {
-            Bitmap icon = drawTextToBitmap(R.drawable.robbery, String.valueOf(cluster.getSize()) );
-            markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icon));
+            //feeding the auto theft cluster manager with the parsed data
+            for(int i = 0; i < autoTheftsCoordinates.size(); i++) {
+                MyItem item = new MyItem(autoTheftsCoordinates.get(i)[1], autoTheftsCoordinates.get(i)[0], R.drawable.car_theft_1);
+                clusterManager.addItem(item);
+            }
+
+            //feeding the homicides cluster manager with the parsed data
+            for(int i = 0; i < homicidesCoordinates.size(); i++) {
+                MyItem item = new MyItem(homicidesCoordinates.get(i)[1], homicidesCoordinates.get(i)[0], R.drawable.homicide);
+                clusterManager.addItem(item);
+            }
+
+            //feeding the robberies cluster manager with the parsed data
+            for(int i = 0; i < robberiesCoordinates.size(); i++) {
+                MyItem item = new MyItem(robberiesCoordinates.get(i)[1], robberiesCoordinates.get(i)[0], R.drawable.robbery);
+                clusterManager.addItem(item);
+            }
+
+            //feeding the sexual assault cluster manager with the parsed data
+            for(int i = 0; i < sexualAssaultsCoordinates.size(); i++) {
+                MyItem item = new MyItem(sexualAssaultsCoordinates.get(i)[1], sexualAssaultsCoordinates.get(i)[0], R.drawable.sexual_assault);
+                clusterManager.addItem(item);
+            }
+
+            //feeding the shootings cluster manager with the parsed data
+            for(int i = 0; i < shootingsCoordinates.size(); i++) {
+                MyItem item = new MyItem(shootingsCoordinates.get(i)[1], shootingsCoordinates.get(i)[0], R.drawable.gun);
+                clusterManager.addItem(item);
+            }
+
+            //feeding the theft over cluster manager with the parsed data
+            for(int i = 0; i < theftOversCoordinates.size(); i++) {
+                MyItem item = new MyItem(theftOversCoordinates.get(i)[1], theftOversCoordinates.get(i)[0], R.drawable.theft_over);
+                clusterManager.addItem(item);
+            }
         }
     }
 
     /*
-    This class implements custom icons for sexual assault markers
-    as well as custom icons for their Clusters
+    This class implements custom icons for the crimes
+    as well as custom icons for the Clusters
      */
-    class SexAssaultIconRendered extends DefaultClusterRenderer<MyItem> {
+    class CrimeIconRendered extends DefaultClusterRenderer<MyItem> {
 
-        public SexAssaultIconRendered(Context context, GoogleMap map, ClusterManager<MyItem> clusterManager) {
+        public CrimeIconRendered(Context context, GoogleMap map, ClusterManager<MyItem> clusterManager) {
             super(context, map, clusterManager);
         }
         @Override
         protected void onBeforeClusterItemRendered(MyItem item, MarkerOptions markerOptions) {
-            markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.sexual_assault));
+            markerOptions.icon(BitmapDescriptorFactory.fromResource(item.getPicture()));
             super.onBeforeClusterItemRendered(item, markerOptions);
         }
+
         @Override
         protected void onBeforeClusterRendered(Cluster<MyItem> cluster, MarkerOptions markerOptions) {
-            Bitmap icon = drawTextToBitmap(R.drawable.sexual_assault, String.valueOf(cluster.getSize()) );
+            Bitmap icon = drawTextToBitmap(R.drawable.crime_cluster_2, String.valueOf(cluster.getSize()) );
             markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icon));
         }
     }
-
-    /*
-    This class implements custom icons for shooting markers
-    as well as custom icons for their Clusters
-     */
-    class ShootingIconRendered extends DefaultClusterRenderer<MyItem> {
-
-        public ShootingIconRendered(Context context, GoogleMap map, ClusterManager<MyItem> clusterManager) {
-            super(context, map, clusterManager);
-        }
-        @Override
-        protected void onBeforeClusterItemRendered(MyItem item, MarkerOptions markerOptions) {
-            markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.gun));
-            super.onBeforeClusterItemRendered(item, markerOptions);
-        }
-        @Override
-        protected void onBeforeClusterRendered(Cluster<MyItem> cluster, MarkerOptions markerOptions) {
-            Bitmap icon = drawTextToBitmap(R.drawable.gun, String.valueOf(cluster.getSize()) );
-            markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icon));
-        }
-    }
-    /*
-    This class implements custom icons for theft over markers
-    as well as custom icons for their Clusters
-     */
-    class TheftOverIconRendered extends DefaultClusterRenderer<MyItem> {
-
-        public TheftOverIconRendered(Context context, GoogleMap map, ClusterManager<MyItem> clusterManager) {
-            super(context, map, clusterManager);
-        }
-        @Override
-        protected void onBeforeClusterItemRendered(MyItem item, MarkerOptions markerOptions) {
-            markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.theft_over));
-            super.onBeforeClusterItemRendered(item, markerOptions);
-        }
-        @Override
-        protected void onBeforeClusterRendered(Cluster<MyItem> cluster, MarkerOptions markerOptions) {
-            Bitmap icon = drawTextToBitmap(R.drawable.theft_over, String.valueOf(cluster.getSize()) );
-            markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icon));
-        }
-    }
-
     /*
     helper function which combines icon and a counter and creates a custom icon for the cluster
      */
