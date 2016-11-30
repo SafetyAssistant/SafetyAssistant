@@ -65,6 +65,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     LatLng startLocation;
 
     private ClusterManager<MyItem> clusterManager;
+    TileOverlay mOverlay;
 
     List<String[]> assaults;
     List<String[]> autoThefts;
@@ -134,17 +135,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 editor.putBoolean("assault", isChecked);
                 editor.commit();
-
-                if (isChecked){
-
-                }
-                else {
-
-                }
+                updateMapWithData();
             }
         });
 
-        final CheckBox cb_autoTheft = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_autoTheft)).findViewById(R.id.action_view_cb);
+        CheckBox cb_autoTheft = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_autoTheft)).findViewById(R.id.action_view_cb);
 
         cb_autoTheft.setChecked(auto_theft_check_state);
 
@@ -154,13 +149,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 editor.putBoolean("autoTheft", isChecked);
                 editor.commit();
-
-                if (isChecked){
-
-                }
-                else {
-
-                }
+                updateMapWithData();
             }
         });
 
@@ -174,13 +163,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 editor.putBoolean("homicide", isChecked);
                 editor.commit();
-
-                if (isChecked){
-
-                }
-                else {
-
-                }
+                updateMapWithData();
             }
         });
 
@@ -194,13 +177,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 editor.putBoolean("robbery", isChecked);
                 editor.commit();
-
-                if (isChecked){
-
-                }
-                else {
-
-                }
+                updateMapWithData();
             }
         });
 
@@ -214,13 +191,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 editor.putBoolean("sexAssault", isChecked);
                 editor.commit();
-
-                if (isChecked){
-
-                }
-                else {
-
-                }
+                updateMapWithData();
             }
         });
 
@@ -234,13 +205,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 editor.putBoolean("shooting", isChecked);
                 editor.commit();
-
-                if (isChecked){
-
-                }
-                else {
-
-                }
+                updateMapWithData();
             }
         });
 
@@ -254,13 +219,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 editor.putBoolean("theftOver", isChecked);
                 editor.commit();
-
-                if (isChecked){
-
-                }
-                else {
-
-                }
+                updateMapWithData();
             }
         });
 
@@ -274,17 +233,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 editor.putBoolean("heatMap", isChecked);
                 editor.commit();
-
-                if (isChecked) {
-                    heatMap = true;
-                    Toast.makeText(MainActivity.this, "HEAT MAP ON", Toast.LENGTH_SHORT).show();
-
-                }
-                else {
-                    heatMap = false;
-                    Toast.makeText(MainActivity.this, "HEAT MAP OFF", Toast.LENGTH_SHORT).show();
-
-                }
+                updateMapWithData();
             }
         });
 
@@ -417,7 +366,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         clusterManager = new ClusterManager<MyItem>(this, mMap);
         clusterManager.setRenderer(new CrimeIconRendered(this, mMap, clusterManager));
         mMap.setOnCameraIdleListener(clusterManager);
-
+        mMap.setOnMarkerClickListener(clusterManager);
         updateMapWithData();
     }
 
@@ -517,9 +466,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public class MyItem implements ClusterItem {
         private final LatLng mPosition;
         private int picture;
-        public MyItem(double lat, double lng, int pictureResource) {
+        private String title;
+
+        public MyItem(double lat, double lng, int pictureResource, String text) {
             mPosition = new LatLng(lat, lng);
             picture = pictureResource;
+            title = text;
         }
 
         @Override
@@ -529,32 +481,65 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         public int getPicture() {
             return picture;
         }
+        public String getTitle() {
+            return title;
+        }
     }
 
     public void updateMapWithData() {
+        clusterManager.clearItems();
+        preferences = this.getSharedPreferences(PREF_FILE_NAME, Context.MODE_PRIVATE);
+        boolean assault_check_state = preferences.getBoolean("assault", false);
+        boolean auto_theft_check_state = preferences.getBoolean("autoTheft", false);
+        boolean homicide_check_state = preferences.getBoolean("homicide", false);
+        boolean robbery_check_state = preferences.getBoolean("robbery", false);
+        boolean sex_assault_check_state = preferences.getBoolean("sexAssault", false);
+        boolean shooting_check_state = preferences.getBoolean("shooting", false);
+        boolean theft_over_check_state = preferences.getBoolean("theftOver", false);
+        boolean heat_map_check_state = preferences.getBoolean("heatMap", false);
+
          /* if heatMap is selected */
-        if(heatMap) {
+        if(heat_map_check_state) {
+            mMap.clear();
+            clusterManager.clearItems();
+            if(mOverlay != null) {
+                mOverlay.clearTileCache();
+            }
             ArrayList<WeightedLatLng> list = new ArrayList<WeightedLatLng>();
-            for(int i = 0; i < assaultCoordinates.size(); i++) {
-                list.add(new WeightedLatLng(new LatLng(assaultCoordinates.get(i)[1], assaultCoordinates.get(i)[0]), 10.0));
+            if(assault_check_state) {
+                for (int i = 0; i < assaultCoordinates.size(); i++) {
+                    list.add(new WeightedLatLng(new LatLng(assaultCoordinates.get(i)[1], assaultCoordinates.get(i)[0]), 10.0));
+                }
             }
-            for(int i = 0; i < autoTheftsCoordinates.size(); i++) {
-                list.add(new WeightedLatLng(new LatLng(autoTheftsCoordinates.get(i)[1], autoTheftsCoordinates.get(i)[0]), 10.0));
+            if(auto_theft_check_state) {
+                for (int i = 0; i < autoTheftsCoordinates.size(); i++) {
+                    list.add(new WeightedLatLng(new LatLng(autoTheftsCoordinates.get(i)[1], autoTheftsCoordinates.get(i)[0]), 10.0));
+                }
             }
-            for(int i = 0; i < homicidesCoordinates.size(); i++) {
-                list.add(new WeightedLatLng(new LatLng(homicidesCoordinates.get(i)[1], homicidesCoordinates.get(i)[0]), 10.0));
+            if(homicide_check_state) {
+                for (int i = 0; i < homicidesCoordinates.size(); i++) {
+                    list.add(new WeightedLatLng(new LatLng(homicidesCoordinates.get(i)[1], homicidesCoordinates.get(i)[0]), 10.0));
+                }
             }
-            for(int i = 0; i < robberiesCoordinates.size(); i++) {
-                list.add(new WeightedLatLng(new LatLng(robberiesCoordinates.get(i)[1], robberiesCoordinates.get(i)[0]), 10.0));
+            if(robbery_check_state) {
+                for (int i = 0; i < robberiesCoordinates.size(); i++) {
+                    list.add(new WeightedLatLng(new LatLng(robberiesCoordinates.get(i)[1], robberiesCoordinates.get(i)[0]), 10.0));
+                }
             }
-            for(int i = 0; i < sexualAssaultsCoordinates.size(); i++) {
-                list.add(new WeightedLatLng(new LatLng(sexualAssaultsCoordinates.get(i)[1], sexualAssaultsCoordinates.get(i)[0]), 10.0));
+            if(sex_assault_check_state) {
+                for (int i = 0; i < sexualAssaultsCoordinates.size(); i++) {
+                    list.add(new WeightedLatLng(new LatLng(sexualAssaultsCoordinates.get(i)[1], sexualAssaultsCoordinates.get(i)[0]), 10.0));
+                }
             }
-            for(int i = 0; i < shootingsCoordinates.size(); i++) {
-                list.add(new WeightedLatLng(new LatLng(shootingsCoordinates.get(i)[1], shootingsCoordinates.get(i)[0]), 10.0));
+            if(shooting_check_state) {
+                for (int i = 0; i < shootingsCoordinates.size(); i++) {
+                    list.add(new WeightedLatLng(new LatLng(shootingsCoordinates.get(i)[1], shootingsCoordinates.get(i)[0]), 10.0));
+                }
             }
-            for(int i = 0; i < theftOversCoordinates.size(); i++) {
-                list.add(new WeightedLatLng(new LatLng(theftOversCoordinates.get(i)[1], theftOversCoordinates.get(i)[0]), 10.0));
+            if(theft_over_check_state) {
+                for (int i = 0; i < theftOversCoordinates.size(); i++) {
+                    list.add(new WeightedLatLng(new LatLng(theftOversCoordinates.get(i)[1], theftOversCoordinates.get(i)[0]), 10.0));
+                }
             }
             // Create a heat map tile provider, passing it the latlngs of the police stations.
             HeatmapTileProvider mProvider = new HeatmapTileProvider.Builder()
@@ -562,52 +547,63 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     .weightedData(list)
                     .build();
             // Add a tile overlay to the map, using the heat map tile provider.
-            TileOverlay mOverlay = mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
+            mOverlay = mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
+
           /* Heat Map is not selected, displaying regular icons and clusters */
         } else {
+            mMap.clear();
             clusterManager.clearItems();
-
-            //feeding the assault cluster manager with the parsed data
-            for(int i = 0; i < assaultCoordinates.size(); i++) {
-                MyItem item = new MyItem(assaultCoordinates.get(i)[1], assaultCoordinates.get(i)[0], R.drawable.assault);
-                clusterManager.addItem(item);
+            if(assault_check_state) {
+                //feeding the assault cluster manager with the parsed data
+                for (int i = 0; i < assaultCoordinates.size(); i++) {
+                    MyItem item = new MyItem(assaultCoordinates.get(i)[1], assaultCoordinates.get(i)[0], R.drawable.assault, "title example");
+                    clusterManager.addItem(item);
+                }
+            }
+            if(auto_theft_check_state) {
+                //feeding the auto theft cluster manager with the parsed data
+                for (int i = 0; i < autoTheftsCoordinates.size(); i++) {
+                    MyItem item = new MyItem(autoTheftsCoordinates.get(i)[1], autoTheftsCoordinates.get(i)[0], R.drawable.car_theft_1, "title example");
+                    clusterManager.addItem(item);
+                }
+            }
+            if(homicide_check_state) {
+                //feeding the homicides cluster manager with the parsed data
+                for (int i = 0; i < homicidesCoordinates.size(); i++) {
+                    MyItem item = new MyItem(homicidesCoordinates.get(i)[1], homicidesCoordinates.get(i)[0], R.drawable.homicide, "title example");
+                    clusterManager.addItem(item);
+                }
+            }
+            if(robbery_check_state) {
+                //feeding the robberies cluster manager with the parsed data
+                for (int i = 0; i < robberiesCoordinates.size(); i++) {
+                    MyItem item = new MyItem(robberiesCoordinates.get(i)[1], robberiesCoordinates.get(i)[0], R.drawable.robbery, "title example");
+                    clusterManager.addItem(item);
+                }
+            }
+            if(sex_assault_check_state) {
+                //feeding the sexual assault cluster manager with the parsed data
+                for (int i = 0; i < sexualAssaultsCoordinates.size(); i++) {
+                    MyItem item = new MyItem(sexualAssaultsCoordinates.get(i)[1], sexualAssaultsCoordinates.get(i)[0], R.drawable.sexual_assault, "title example");
+                    clusterManager.addItem(item);
+                }
+            }
+            if(shooting_check_state) {
+                //feeding the shootings cluster manager with the parsed data
+                for (int i = 0; i < shootingsCoordinates.size(); i++) {
+                    MyItem item = new MyItem(shootingsCoordinates.get(i)[1], shootingsCoordinates.get(i)[0], R.drawable.gun, "title example");
+                    clusterManager.addItem(item);
+                }
+            }
+            if(theft_over_check_state) {
+                //feeding the theft over cluster manager with the parsed data
+                for (int i = 0; i < theftOversCoordinates.size(); i++) {
+                    MyItem item = new MyItem(theftOversCoordinates.get(i)[1], theftOversCoordinates.get(i)[0], R.drawable.theft_over, "title example");
+                    clusterManager.addItem(item);
+                }
             }
 
-            //feeding the auto theft cluster manager with the parsed data
-            for(int i = 0; i < autoTheftsCoordinates.size(); i++) {
-                MyItem item = new MyItem(autoTheftsCoordinates.get(i)[1], autoTheftsCoordinates.get(i)[0], R.drawable.car_theft_1);
-                clusterManager.addItem(item);
-            }
-
-            //feeding the homicides cluster manager with the parsed data
-            for(int i = 0; i < homicidesCoordinates.size(); i++) {
-                MyItem item = new MyItem(homicidesCoordinates.get(i)[1], homicidesCoordinates.get(i)[0], R.drawable.homicide);
-                clusterManager.addItem(item);
-            }
-
-            //feeding the robberies cluster manager with the parsed data
-            for(int i = 0; i < robberiesCoordinates.size(); i++) {
-                MyItem item = new MyItem(robberiesCoordinates.get(i)[1], robberiesCoordinates.get(i)[0], R.drawable.robbery);
-                clusterManager.addItem(item);
-            }
-
-            //feeding the sexual assault cluster manager with the parsed data
-            for(int i = 0; i < sexualAssaultsCoordinates.size(); i++) {
-                MyItem item = new MyItem(sexualAssaultsCoordinates.get(i)[1], sexualAssaultsCoordinates.get(i)[0], R.drawable.sexual_assault);
-                clusterManager.addItem(item);
-            }
-
-            //feeding the shootings cluster manager with the parsed data
-            for(int i = 0; i < shootingsCoordinates.size(); i++) {
-                MyItem item = new MyItem(shootingsCoordinates.get(i)[1], shootingsCoordinates.get(i)[0], R.drawable.gun);
-                clusterManager.addItem(item);
-            }
-
-            //feeding the theft over cluster manager with the parsed data
-            for(int i = 0; i < theftOversCoordinates.size(); i++) {
-                MyItem item = new MyItem(theftOversCoordinates.get(i)[1], theftOversCoordinates.get(i)[0], R.drawable.theft_over);
-                clusterManager.addItem(item);
-            }
+            clusterManager.cluster();
         }
     }
 
@@ -622,7 +618,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
         @Override
         protected void onBeforeClusterItemRendered(MyItem item, MarkerOptions markerOptions) {
-            markerOptions.icon(BitmapDescriptorFactory.fromResource(item.getPicture()));
+            markerOptions.icon(BitmapDescriptorFactory.fromResource(item.getPicture())).title(item.getTitle());
             super.onBeforeClusterItemRendered(item, markerOptions);
         }
 
