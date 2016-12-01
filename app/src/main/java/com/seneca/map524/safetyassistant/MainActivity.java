@@ -1,6 +1,5 @@
 package com.seneca.map524.safetyassistant;
 
-import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -15,6 +14,7 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.location.Location;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -22,13 +22,15 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.SearchView;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.Toast;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -40,6 +42,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
@@ -53,6 +56,7 @@ import com.google.maps.android.heatmaps.WeightedLatLng;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+
 import java.util.List;
 
 import au.com.bytecode.opencsv.CSVReader;
@@ -63,18 +67,27 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private GoogleMap mMap;
     GoogleApiClient mGoogleApiClient;
     LatLng startLocation;
-    private ClusterManager<MyItem> assaultClusterManager;
-    private ClusterManager<MyItem> autoTheftClusterManager;
-    private ClusterManager<MyItem> homicideClusterManager;
-    private ClusterManager<MyItem> robberyClusterManager;
-    private ClusterManager<MyItem> sexAssaultClusterManager;
-    private ClusterManager<MyItem> shootingClusterManager;
-    private ClusterManager<MyItem> theftOverClusterManager;
 
-    private static boolean heatMap = false;
+    private ClusterManager<MyItem> clusterManager;
+    TileOverlay mOverlay;
+    Cluster<MyItem> clickedCluster;
 
-    private SharedPreferences preferences ;
-    private SharedPreferences.Editor editor;
+    List<String[]> assaults;
+    List<String[]> autoThefts;
+    List<String[]> homicides;
+    List<String[]> robberies;
+    List<String[]> sexualAssaults;
+    List<String[]> shootings;
+    List<String[]> theftOvers;
+    List<Double[]> assaultCoordinates;
+    List<Double[]> autoTheftsCoordinates;
+    List<Double[]> homicidesCoordinates;
+    List<Double[]> robberiesCoordinates;
+    List<Double[]> sexualAssaultsCoordinates;
+    List<Double[]> shootingsCoordinates;
+    List<Double[]> theftOversCoordinates;
+
+    private SharedPreferences preferences;
     private static final String PREF_FILE_NAME = "LegendCheckBoxPref";
 
 
@@ -93,9 +106,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         boolean theft_over_check_state = preferences.getBoolean("theftOver", false);
         boolean heat_map_check_state = preferences.getBoolean("heatMap", false);
 
-        editor = preferences.edit();
-
-
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -113,171 +123,115 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
 
         Menu menu = navigationView.getMenu();
-
+        //creating checkBoxes for the left drawer
         CheckBox cb_assault =(CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_assault)).findViewById(R.id.action_view_cb);
+        CheckBox cb_autoTheft = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_autoTheft)).findViewById(R.id.action_view_cb);
+        CheckBox cb_homocide = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_homicide)).findViewById(R.id.action_view_cb);
+        CheckBox cb_robbery = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_robbery)).findViewById(R.id.action_view_cb);
+        CheckBox cb_sexAssault = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_sexAssault)).findViewById(R.id.action_view_cb);
+        CheckBox cb_shooting = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_shooting)).findViewById(R.id.action_view_cb);
+        CheckBox cb_theftOver = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_theftOver)).findViewById(R.id.action_view_cb);
+        CheckBox cb_heatMap =(CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_heatMap)).findViewById(R.id.action_view_cb);
 
+        //initializing default checkbox values based on the saved preferences
+        cb_autoTheft.setChecked(auto_theft_check_state);
         cb_assault.setChecked(assault_check_state);
+        cb_homocide.setChecked(homicide_check_state);
+        cb_robbery.setChecked(robbery_check_state);
+        cb_sexAssault.setChecked(sex_assault_check_state);
+        cb_shooting.setChecked(shooting_check_state);
+        cb_theftOver.setChecked(theft_over_check_state);
+        cb_heatMap.setChecked(heat_map_check_state);
 
+        //Listener for assaults checkbox
         cb_assault.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
-                editor.putBoolean("assault", isChecked);
-                editor.commit();
-
-                if (isChecked){
-
-                }
-                else {
-
-                }
+                preferences.edit().putBoolean("assault", isChecked).apply();
+                updateMapWithData();
             }
         });
 
-        final CheckBox cb_autoTheft = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_autoTheft)).findViewById(R.id.action_view_cb);
-
-        cb_autoTheft.setChecked(auto_theft_check_state);
-
+        //Listener for auto theft checkbox
         cb_autoTheft.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
-                editor.putBoolean("autoTheft", isChecked);
-                editor.commit();
-
-                if (isChecked){
-
-                }
-                else {
-
-                }
+                preferences.edit().putBoolean("autoTheft", isChecked).apply();
+                updateMapWithData();
             }
         });
 
-        CheckBox cb_homocide = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_homicide)).findViewById(R.id.action_view_cb);
-
-        cb_homocide.setChecked(homicide_check_state);
-
+        //Listener for homocide checkbox
         cb_homocide.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
-                editor.putBoolean("homicide", isChecked);
-                editor.commit();
-
-                if (isChecked){
-
-                }
-                else {
-
-                }
+                preferences.edit().putBoolean("homicide", isChecked).apply();
+                updateMapWithData();
             }
         });
 
-        CheckBox cb_robbery = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_robbery)).findViewById(R.id.action_view_cb);
-
-        cb_robbery.setChecked(robbery_check_state);
-
+        //Listener for robbery checkbox
         cb_robbery.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
-                editor.putBoolean("robbery", isChecked);
-                editor.commit();
-
-                if (isChecked){
-
-                }
-                else {
-
-                }
+                preferences.edit().putBoolean("robbery", isChecked).apply();
+                updateMapWithData();
             }
         });
 
-        CheckBox cb_sexAssault = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_sexAssault)).findViewById(R.id.action_view_cb);
-
-        cb_sexAssault.setChecked(sex_assault_check_state);
-
+        //Listener for sexual assault checkbox
         cb_sexAssault.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
-                editor.putBoolean("sexAssault", isChecked);
-                editor.commit();
-
-                if (isChecked){
-
-                }
-                else {
-
-                }
+                preferences.edit().putBoolean("sexAssault", isChecked).apply();
+                updateMapWithData();
             }
         });
 
-        CheckBox cb_shooting = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_shooting)).findViewById(R.id.action_view_cb);
-
-        cb_shooting.setChecked(shooting_check_state);
-
+        //Listener for shootings checkbox
         cb_shooting.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
-                editor.putBoolean("shooting", isChecked);
-                editor.commit();
-
-                if (isChecked){
-
-                }
-                else {
-
-                }
+                preferences.edit().putBoolean("shooting", isChecked).apply();
+                updateMapWithData();
             }
         });
 
-        CheckBox cb_theftOver = (CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_theftOver)).findViewById(R.id.action_view_cb);
-
-        cb_theftOver.setChecked(theft_over_check_state);
-
+        //Listener for theft over checkbox
         cb_theftOver.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
-                editor.putBoolean("theftOver", isChecked);
-                editor.commit();
-
-                if (isChecked){
-
-                }
-                else {
-
-                }
+                preferences.edit().putBoolean("theftOver", isChecked).apply();
+                updateMapWithData();
             }
         });
 
-        CheckBox cb_heatMap =(CheckBox) MenuItemCompat.getActionView(menu.findItem(R.id.cb_heatMap)).findViewById(R.id.action_view_cb);
-
-        cb_heatMap.setChecked(heat_map_check_state);
-
+        //Listener for the Heat Map checkbox
         cb_heatMap.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
-                editor.putBoolean("heatMap", isChecked);
-                editor.commit();
-
-                if (isChecked) {
-                    heatMap = true;
-                    Toast.makeText(MainActivity.this, "HEAT MAP ON", Toast.LENGTH_SHORT).show();
-
-                }
-                else {
-                    heatMap = false;
-                    Toast.makeText(MainActivity.this, "HEAT MAP OFF", Toast.LENGTH_SHORT).show();
-
-                }
+                preferences.edit().putBoolean("heatMap", isChecked).apply();
+                updateMapWithData();
             }
         });
 
+        /*
+        parsing all the csv files and getting the coordinates from each data set
+         */
+        assaults = getCsvData("assault.csv");
+        autoThefts = getCsvData("auto-theft.csv");
+        homicides = getCsvData("homicide.csv");
+        robberies = getCsvData("robbery.csv");
+        sexualAssaults = getCsvData("sexual-assault.csv");
+        shootings = getCsvData("shooting.csv");
+        theftOvers = getCsvData("theft-over.csv");
+        assaultCoordinates = getParsedCoordinates(assaults, 0);
+        autoTheftsCoordinates = getParsedCoordinates(autoThefts, 0);
+        homicidesCoordinates = getParsedCoordinates(homicides, 0);
+        robberiesCoordinates = getParsedCoordinates(robberies, 0);
+        sexualAssaultsCoordinates = getParsedCoordinates(sexualAssaults, 0);
+        shootingsCoordinates = getParsedCoordinates(shootings, 0);
+        theftOversCoordinates = getParsedCoordinates(theftOvers, 0);
     }
 
     @Override
@@ -330,7 +284,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
     }
 
@@ -356,6 +310,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 2);
         }
 
+        //Listener for the 'Jump to My Location' button
         mMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener(){
             @Override
             public boolean onMyLocationButtonClick() {
@@ -378,143 +333,134 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-          LatLng toronto = new LatLng(43.6532, -79.3832);
+        LatLng toronto = new LatLng(43.6532, -79.3832);
 
-          CameraUpdate location = CameraUpdateFactory.newLatLngZoom(toronto, 12);
-          mMap.moveCamera(CameraUpdateFactory.newLatLng(toronto));
-          mMap.animateCamera(location);
+        CameraUpdate location = CameraUpdateFactory.newLatLngZoom(toronto, 12);
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(toronto));
+        mMap.animateCamera(location);
 
-        /*
-        parsing all the csv files and getting the coordinates from each data set
-         */
-        List<String[]> assaults = getCsvData("assault.csv");
-        List<String[]> autoThefts = getCsvData("auto-theft.csv");
-        List<String[]> homicides = getCsvData("homicide.csv");
-        List<String[]> robberies = getCsvData("robbery.csv");
-        List<String[]> sexualAssaults = getCsvData("sexual-assault.csv");
-        List<String[]> shootings = getCsvData("shooting.csv");
-        List<String[]> theftOvers = getCsvData("theft-over.csv");
-        List<Double[]> assaultCoordinates = getParsedCoordinates(assaults, 0);
-        List<Double[]> autoTheftsCoordinates = getParsedCoordinates(autoThefts, 0);
-        List<Double[]> homicidesCoordinates = getParsedCoordinates(homicides, 0);
-        List<Double[]> robberiesCoordinates = getParsedCoordinates(robberies, 0);
-        List<Double[]> sexualAssaultsCoordinates = getParsedCoordinates(sexualAssaults, 0);
-        List<Double[]> shootingsCoordinates = getParsedCoordinates(shootings, 0);
-        List<Double[]> theftOversCoordinates = getParsedCoordinates(theftOvers, 0);
+        // Initializing the cluster manager with the context and the map.
+        clusterManager = new ClusterManager<>(this, mMap);
+        clusterManager.setRenderer(new CrimeIconRendered(this, mMap, clusterManager));
+        //IdleListener for the marker clustering
+        mMap.setOnCameraIdleListener(clusterManager);
+        //Custom InfoWindow for the popup windows when you click a cluster
+        mMap.setInfoWindowAdapter(clusterManager.getMarkerManager());
+        //Setting a custom adapter for Clusters
+        clusterManager.getClusterMarkerCollection().setOnInfoWindowAdapter(new MyCustomAdapterForClusters());
+        //Click listener for regularmarkers
+        mMap.setOnMarkerClickListener(clusterManager);
 
-        /* if heatMap is selected */
-        if(heatMap) {
-            ArrayList<WeightedLatLng> list = new ArrayList<WeightedLatLng>();
-            for(int i = 0; i < assaultCoordinates.size(); i++) {
-                list.add(new WeightedLatLng(new LatLng(assaultCoordinates.get(i)[1], assaultCoordinates.get(i)[0]), 10.0));
+        //Listener for the onClusterClick. Saving the clicked Cluster for later use in the adapter
+        clusterManager.setOnClusterClickListener(new ClusterManager.OnClusterClickListener<MyItem>() {
+            @Override
+            public boolean onClusterClick(Cluster<MyItem> cluster) {
+                clickedCluster = cluster; // remember for use later in the Adapter
+                return false;
             }
-            for(int i = 0; i < autoTheftsCoordinates.size(); i++) {
-                list.add(new WeightedLatLng(new LatLng(autoTheftsCoordinates.get(i)[1], autoTheftsCoordinates.get(i)[0]), 10.0));
-            }
-            for(int i = 0; i < homicidesCoordinates.size(); i++) {
-                list.add(new WeightedLatLng(new LatLng(homicidesCoordinates.get(i)[1], homicidesCoordinates.get(i)[0]), 10.0));
-            }
-            for(int i = 0; i < robberiesCoordinates.size(); i++) {
-                list.add(new WeightedLatLng(new LatLng(robberiesCoordinates.get(i)[1], robberiesCoordinates.get(i)[0]), 10.0));
-            }
-            for(int i = 0; i < sexualAssaultsCoordinates.size(); i++) {
-                list.add(new WeightedLatLng(new LatLng(sexualAssaultsCoordinates.get(i)[1], sexualAssaultsCoordinates.get(i)[0]), 10.0));
-            }
-            for(int i = 0; i < shootingsCoordinates.size(); i++) {
-                list.add(new WeightedLatLng(new LatLng(shootingsCoordinates.get(i)[1], shootingsCoordinates.get(i)[0]), 10.0));
-            }
-            for(int i = 0; i < theftOversCoordinates.size(); i++) {
-                list.add(new WeightedLatLng(new LatLng(theftOversCoordinates.get(i)[1], theftOversCoordinates.get(i)[0]), 10.0));
-            }
-            // Create a heat map tile provider, passing it the latlngs of the police stations.
-            HeatmapTileProvider mProvider = new HeatmapTileProvider.Builder()
-                    .radius(30)
-                    .weightedData(list)
-                    .build();
-            // Add a tile overlay to the map, using the heat map tile provider.
-            TileOverlay mOverlay = mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
-          /* Heat Map is not selected, displaying regular icons and clusters */
-        } else {
+        });
 
-            // Initialize the cluster managers with the context and the map.
-            assaultClusterManager = new ClusterManager<MyItem>(this, mMap);
-            autoTheftClusterManager = new ClusterManager<MyItem>(this, mMap);
-            homicideClusterManager = new ClusterManager<MyItem>(this, mMap);
-            robberyClusterManager = new ClusterManager<MyItem>(this, mMap);
-            sexAssaultClusterManager = new ClusterManager<MyItem>(this, mMap);
-            shootingClusterManager = new ClusterManager<MyItem>(this, mMap);
-            theftOverClusterManager = new ClusterManager<MyItem>(this, mMap);
+        //Adding markers to the map
+        updateMapWithData();
+    }
 
-            //Set custom renderers for each cluster manager in order to display custom icons
-            assaultClusterManager.setRenderer(new AssaultIconRendered(this, mMap, assaultClusterManager));
-            autoTheftClusterManager.setRenderer(new AutoTheftIconRendered(this, mMap, autoTheftClusterManager));
-            homicideClusterManager.setRenderer(new HomicideIconRendered(this, mMap, homicideClusterManager));
-            robberyClusterManager.setRenderer(new RobberyIconRendered(this, mMap, robberyClusterManager));
-            sexAssaultClusterManager.setRenderer(new SexAssaultIconRendered(this, mMap, sexAssaultClusterManager));
-            shootingClusterManager.setRenderer(new ShootingIconRendered(this, mMap, shootingClusterManager));
-            theftOverClusterManager.setRenderer(new TheftOverIconRendered(this, mMap, theftOverClusterManager));
+    /*
+    Custom Adapter for Cluster. Fires when we click a Cluster icon.
+     */
+    class MyCustomAdapterForClusters implements GoogleMap.InfoWindowAdapter {
+        @Override
+        public View getInfoWindow(Marker marker) {
+            return null;
+        }
 
+        @Override
+        public View getInfoContents(Marker marker) {
+            //Retrieving all the items from the clicked cluster
+            ArrayList<MyItem> items = (ArrayList)clickedCluster.getItems();
+            List<String> snippets = new ArrayList<String>();
+            String finalSnippet = "";
+            int counter = 0;
 
-            // Point the map's listeners at the listeners implemented by the cluster managers
-            mMap.setOnCameraIdleListener(new GoogleMap.OnCameraIdleListener() {
-                @Override
-                public void onCameraIdle() {
-                    assaultClusterManager.onCameraIdle();
-                    autoTheftClusterManager.onCameraIdle();
-                    homicideClusterManager.onCameraIdle();
-                    robberyClusterManager.onCameraIdle();
-                    sexAssaultClusterManager.onCameraIdle();
-                    shootingClusterManager.onCameraIdle();
-                    theftOverClusterManager.onCameraIdle();
+            int assaultCounter = 0;
+            int autoTheftCounter = 0;
+            int homicidesCounter = 0;
+            int robberiesCounter = 0;
+            int sexualAssaultsCounter = 0;
+            int shootingsCounter = 0;
+            int theftOverCounter = 0;
+            //Going through the list of items in order to count different types of crimes
+            for(int i = 0; i < items.size(); i++) {
+                int id = items.get(i).getPicture();
+                switch(id){
+                    case R.drawable.assault:
+                        assaultCounter++;
+                        break;
+                    case R.drawable.car_theft_1:
+                        autoTheftCounter++;
+                        break;
+                    case R.drawable.homicide:
+                        homicidesCounter++;
+                        break;
+                    case R.drawable.robbery:
+                        robberiesCounter++;
+                        break;
+                    case R.drawable.sexual_assault:
+                        sexualAssaultsCounter++;
+                        break;
+                    case R.drawable.gun:
+                        shootingsCounter++;
+                        break;
+                    case R.drawable.theft_over:
+                        theftOverCounter++;
+                        break;
+                    default:
+                        break;
                 }
-            });
-
-            //feeding the assault cluster manager with the parsed data
-            for(int i = 0; i < assaultCoordinates.size(); i++) {
-                MyItem item = new MyItem(assaultCoordinates.get(i)[1], assaultCoordinates.get(i)[0]);
-                assaultClusterManager.addItem(item);
             }
 
-            //feeding the auto theft cluster manager with the parsed data
-            for(int i = 0; i < autoTheftsCoordinates.size(); i++) {
-                MyItem item = new MyItem(autoTheftsCoordinates.get(i)[1], autoTheftsCoordinates.get(i)[0]);
-                autoTheftClusterManager.addItem(item);
+            //Building the snippet for the Cluster
+            snippets.add(((assaultCounter != 0) ? "Assaults: " + assaultCounter: ""));
+            snippets.add(((autoTheftCounter != 0) ? "Auto Thefts: " + autoTheftCounter : ""));
+            snippets.add(((homicidesCounter != 0) ? "Homicides: " + homicidesCounter : ""));
+            snippets.add(((robberiesCounter != 0) ? "Robberies: " + robberiesCounter : ""));
+            snippets.add(((sexualAssaultsCounter != 0) ? "Sexual Assaults: " + sexualAssaultsCounter : ""));
+            snippets.add(((shootingsCounter != 0) ? "Shootings: " + shootingsCounter : ""));
+            snippets.add(((theftOverCounter != 0) ? "Theft Over: " + theftOverCounter : ""));
+
+            for(String item : snippets) {
+                if(item.length() > 0) {
+                    if(counter == 0) {
+                        finalSnippet += item;
+                        counter ++;
+                    } else {
+                        finalSnippet += "\n" + item;
+                        counter ++;
+                    }
+                }
             }
 
-            //feeding the homicides cluster manager with the parsed data
-            for(int i = 0; i < homicidesCoordinates.size(); i++) {
-                MyItem item = new MyItem(homicidesCoordinates.get(i)[1], homicidesCoordinates.get(i)[0]);
-                homicideClusterManager.addItem(item);
-            }
+            //Building a custom view for the Info Window
+            Context context = getApplicationContext();
+            LinearLayout info = new LinearLayout(context);
+            info.setOrientation(LinearLayout.VERTICAL);
 
-            //feeding the robberies cluster manager with the parsed data
-            for(int i = 0; i < robberiesCoordinates.size(); i++) {
-                MyItem item = new MyItem(robberiesCoordinates.get(i)[1], robberiesCoordinates.get(i)[0]);
-                robberyClusterManager.addItem(item);
-            }
+            TextView title = new TextView(context);
+            title.setTextColor(Color.BLACK);
+            title.setGravity(Gravity.CENTER);
+            title.setTypeface(null, Typeface.BOLD);
+            title.setText("List of Crimes");
 
-            //feeding the sexual assault cluster manager with the parsed data
-            for(int i = 0; i < sexualAssaultsCoordinates.size(); i++) {
-                MyItem item = new MyItem(sexualAssaultsCoordinates.get(i)[1], sexualAssaultsCoordinates.get(i)[0]);
-                sexAssaultClusterManager.addItem(item);
-            }
-
-            //feeding the shootings cluster manager with the parsed data
-            for(int i = 0; i < shootingsCoordinates.size(); i++) {
-                MyItem item = new MyItem(shootingsCoordinates.get(i)[1], shootingsCoordinates.get(i)[0]);
-                shootingClusterManager.addItem(item);
-            }
-
-            //feeding the theft over cluster manager with the parsed data
-            for(int i = 0; i < theftOversCoordinates.size(); i++) {
-                MyItem item = new MyItem(theftOversCoordinates.get(i)[1], theftOversCoordinates.get(i)[0]);
-                theftOverClusterManager.addItem(item);
-            }
+            TextView snippet = new TextView(context);
+            snippet.setTextColor(Color.GRAY);
+            snippet.setText(finalSnippet);
+            info.addView(title);
+            info.addView(snippet);
+            return info;
         }
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == 2) {
             if (permissions.length == 1 &&
                     permissions[0] == android.Manifest.permission.ACCESS_FINE_LOCATION &&
@@ -535,12 +481,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.option_menu, menu);
 
-        inflater.inflate(R.menu.search_menu, menu);
-        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-        SearchView searchView = (SearchView) menu.findItem(R.id.search).getActionView();
-        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
-        searchView.setIconifiedByDefault(false);
-
         return true;
     }
 
@@ -548,13 +488,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.search:
-                onSearchRequested();
-                return true;
-            case R.id.options:
-                Intent options = new Intent(this, Options.class);
-                startActivity(options);
-                return true;
             case R.id.about:
                 Intent about = new Intent(this, About.class);
                 startActivity(about);
@@ -571,8 +504,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     //helper function to parse csv files
     //each line becomes a String which we keep in the List
     List<String[]> getCsvData(String filename) {
-        String next[] = {};
-        List<String[]> list = new ArrayList<String[]>();
+        String next[];
+        List<String[]> list = new ArrayList<>();
         try {
             //Specify asset file name in open();
             CSVReader reader = new CSVReader(new InputStreamReader(getAssets().open(filename)));
@@ -594,7 +527,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     //all coordinates in all datasets come in format "POINT (-79.40189534 43.641915264)"
     //but we need to get doubles from them
     List<Double[]> getParsedCoordinates(List<String[]> data, int column){
-        List<Double[]> list = new ArrayList<Double[]>();
+        List<Double[]> list = new ArrayList<>();
         String[] tokens;
         for (int i = 0; i < data.size(); i++) {
             tokens = data.get(i)[column].split(" ");
@@ -608,185 +541,201 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     //helper class needed to set clustering for the map markers
     public class MyItem implements ClusterItem {
         private final LatLng mPosition;
+        private int picture;
+        private String title;
 
-        public MyItem(double lat, double lng) {
+        MyItem(double lat, double lng, int pictureResource, String text) {
             mPosition = new LatLng(lat, lng);
+            picture = pictureResource;
+            title = text;
         }
 
         @Override
         public LatLng getPosition() {
             return mPosition;
         }
+        int getPicture() {
+            return picture;
+        }
+        public String getTitle() {
+            return title;
+        }
+    }
+
+    public void updateMapWithData() {
+        //clearing the current clusterManager
+        clusterManager.clearItems();
+        //retrieving current preferences
+        preferences = this.getSharedPreferences(PREF_FILE_NAME, Context.MODE_PRIVATE);
+        boolean assault_check_state = preferences.getBoolean("assault", false);
+        boolean auto_theft_check_state = preferences.getBoolean("autoTheft", false);
+        boolean homicide_check_state = preferences.getBoolean("homicide", false);
+        boolean robbery_check_state = preferences.getBoolean("robbery", false);
+        boolean sex_assault_check_state = preferences.getBoolean("sexAssault", false);
+        boolean shooting_check_state = preferences.getBoolean("shooting", false);
+        boolean theft_over_check_state = preferences.getBoolean("theftOver", false);
+        boolean heat_map_check_state = preferences.getBoolean("heatMap", false);
+
+        /* if heatMap is selected */
+        if(heat_map_check_state) {
+            mMap.clear();
+            if(mOverlay != null) {
+                mOverlay.clearTileCache();
+            }
+            ArrayList<WeightedLatLng> list = new ArrayList<>();
+            if(assault_check_state) {
+                for (int i = 0; i < assaultCoordinates.size(); i++) {
+                    list.add(new WeightedLatLng(new LatLng(assaultCoordinates.get(i)[1], assaultCoordinates.get(i)[0]), 10.0));
+                }
+            }
+            if(auto_theft_check_state) {
+                for (int i = 0; i < autoTheftsCoordinates.size(); i++) {
+                    list.add(new WeightedLatLng(new LatLng(autoTheftsCoordinates.get(i)[1], autoTheftsCoordinates.get(i)[0]), 10.0));
+                }
+            }
+            if(homicide_check_state) {
+                for (int i = 0; i < homicidesCoordinates.size(); i++) {
+                    list.add(new WeightedLatLng(new LatLng(homicidesCoordinates.get(i)[1], homicidesCoordinates.get(i)[0]), 10.0));
+                }
+            }
+            if(robbery_check_state) {
+                for (int i = 0; i < robberiesCoordinates.size(); i++) {
+                    list.add(new WeightedLatLng(new LatLng(robberiesCoordinates.get(i)[1], robberiesCoordinates.get(i)[0]), 10.0));
+                }
+            }
+            if(sex_assault_check_state) {
+                for (int i = 0; i < sexualAssaultsCoordinates.size(); i++) {
+                    list.add(new WeightedLatLng(new LatLng(sexualAssaultsCoordinates.get(i)[1], sexualAssaultsCoordinates.get(i)[0]), 10.0));
+                }
+            }
+            if(shooting_check_state) {
+                for (int i = 0; i < shootingsCoordinates.size(); i++) {
+                    list.add(new WeightedLatLng(new LatLng(shootingsCoordinates.get(i)[1], shootingsCoordinates.get(i)[0]), 10.0));
+                }
+            }
+            if(theft_over_check_state) {
+                for (int i = 0; i < theftOversCoordinates.size(); i++) {
+                    list.add(new WeightedLatLng(new LatLng(theftOversCoordinates.get(i)[1], theftOversCoordinates.get(i)[0]), 10.0));
+                }
+            }
+            // Create a heat map tile provider, passing it the latlngs of the police stations.
+            HeatmapTileProvider mProvider = new HeatmapTileProvider.Builder()
+                    .radius(30)
+                    .weightedData(list)
+                    .build();
+            // Add a tile overlay to the map, using the heat map tile provider.
+            mOverlay = mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
+
+          /* Heat Map is not selected, displaying regular icons and clusters */
+        } else {
+            mMap.clear();
+            if(assault_check_state) {
+                //feeding the assault cluster manager with the parsed data
+                for (int i = 0; i < assaultCoordinates.size(); i++) {
+                    MyItem item = new MyItem(assaultCoordinates.get(i)[1],
+                            assaultCoordinates.get(i)[0],
+                            R.drawable.assault,
+                            "Assault, occurred at " + assaults.get(i)[5] + ":00 O'clock"
+                    );
+                    clusterManager.addItem(item);
+                }
+            }
+            if(auto_theft_check_state) {
+                //feeding the auto theft cluster manager with the parsed data
+                for (int i = 0; i < autoTheftsCoordinates.size(); i++) {
+                    MyItem item = new MyItem(autoTheftsCoordinates.get(i)[1],
+                            autoTheftsCoordinates.get(i)[0],
+                            R.drawable.car_theft_1,
+                            "Car Theft, occurred at " + autoThefts.get(i)[5] + ":00 O'clock"
+                    );
+                    clusterManager.addItem(item);
+                }
+            }
+            if(homicide_check_state) {
+                //feeding the homicides cluster manager with the parsed data
+                for (int i = 0; i < homicidesCoordinates.size(); i++) {
+                    String[] date = homicides.get(i)[2].split("T");
+                    MyItem item = new MyItem(homicidesCoordinates.get(i)[1],
+                            homicidesCoordinates.get(i)[0],
+                            R.drawable.homicide,
+                            "Homicide, type: " + homicides.get(i)[16] + ", occurred on " + date[0]
+                    );
+                    clusterManager.addItem(item);
+                }
+            }
+            if(robbery_check_state) {
+                //feeding the robberies cluster manager with the parsed data
+                for (int i = 0; i < robberiesCoordinates.size(); i++) {
+                    MyItem item = new MyItem(robberiesCoordinates.get(i)[1],
+                            robberiesCoordinates.get(i)[0],
+                            R.drawable.robbery,
+                            "Robbery, occurred at " + robberies.get(i)[5] + ":00 O'clock"
+                    );
+                    clusterManager.addItem(item);
+                }
+            }
+            if(sex_assault_check_state) {
+                //feeding the sexual assault cluster manager with the parsed data
+                for (int i = 0; i < sexualAssaultsCoordinates.size(); i++) {
+                    MyItem item = new MyItem(sexualAssaultsCoordinates.get(i)[1],
+                            sexualAssaultsCoordinates.get(i)[0],
+                            R.drawable.sexual_assault,
+                            "Sexual Assault, occurred at " + sexualAssaults.get(i)[5] + ":00 O'clock"
+                    );
+                    clusterManager.addItem(item);
+                }
+            }
+            if(shooting_check_state) {
+                //feeding the shootings cluster manager with the parsed data
+                for (int i = 0; i < shootingsCoordinates.size(); i++) {
+                    String[] date = shootings.get(i)[2].split("T");
+                    MyItem item = new MyItem(
+                            shootingsCoordinates.get(i)[1],
+                            shootingsCoordinates.get(i)[0],
+                            R.drawable.gun,
+                            "Shooting, occurred on " + date[0]
+                    );
+                    clusterManager.addItem(item);
+                }
+            }
+            if(theft_over_check_state) {
+                //feeding the theft over cluster manager with the parsed data
+                for (int i = 0; i < theftOversCoordinates.size(); i++) {
+                    MyItem item = new MyItem(theftOversCoordinates.get(i)[1],
+                            theftOversCoordinates.get(i)[0],
+                            R.drawable.theft_over,
+                            "Theft Over, occurred at " + theftOvers.get(i)[5] + ":00 O'clock"
+                    );
+                    clusterManager.addItem(item);
+                }
+            }
+            //This call needed to reactively update the markers
+            clusterManager.cluster();
+        }
     }
 
     /*
-    This class implements custom icons for assault markers
-    as well as custom icons for their Clusters
+    This class implements custom icons for the crimes
+    as well as custom icons for the Clusters
      */
-    class AssaultIconRendered extends DefaultClusterRenderer<MyItem> {
+    class CrimeIconRendered extends DefaultClusterRenderer<MyItem> {
 
-        public AssaultIconRendered(Context context, GoogleMap map, ClusterManager<MyItem> clusterManager) {
-            super(context, map, clusterManager);
-        }
-
-        @Override
-        protected void onBeforeClusterItemRendered(MyItem item, MarkerOptions markerOptions) {
-            markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.assault));
-            super.onBeforeClusterItemRendered(item, markerOptions);
-        }
-        @Override
-        protected void onBeforeClusterRendered(Cluster<MyItem> cluster, MarkerOptions markerOptions) {
-
-//            Context mContext = getApplicationContext();
-//            final Drawable clusterIcon = ContextCompat.getDrawable(mContext, R.drawable.assault);
-//            //final Drawable clusterIcon = getResources().getDrawable(R.drawable.assault);
-//
-//            IconGenerator mClusterIconGenerator = new IconGenerator(mContext);
-//            clusterIcon.setColorFilter(getResources().getColor(android.R.color.holo_orange_light), PorterDuff.Mode.SRC_ATOP);
-//            mClusterIconGenerator.setBackground(clusterIcon);
-//
-//            //modify padding for one or two digit numbers
-//            if (cluster.getSize() < 10) {
-//                mClusterIconGenerator.setContentPadding(40, 20, 0, 0);
-//            }
-//            else {
-//                mClusterIconGenerator.setContentPadding(30, 20, 0, 0);
-//            }
-
-            Bitmap icon = drawTextToBitmap(R.drawable.assault,String.valueOf(cluster.getSize()) );
-            //mClusterIconGenerator.makeIcon(String.valueOf(cluster.getSize()));
-
-            markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icon));
-
-        }
-
-    }
-
-    /*
-    This class implements custom icons for auto theft markers
-    as well as custom icons for their Clusters
-     */
-    class AutoTheftIconRendered extends DefaultClusterRenderer<MyItem> {
-
-        public AutoTheftIconRendered(Context context, GoogleMap map, ClusterManager<MyItem> clusterManager) {
+        CrimeIconRendered(Context context, GoogleMap map, ClusterManager<MyItem> clusterManager) {
             super(context, map, clusterManager);
         }
         @Override
         protected void onBeforeClusterItemRendered(MyItem item, MarkerOptions markerOptions) {
-            markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.car_theft_1));
+            markerOptions.icon(BitmapDescriptorFactory.fromResource(item.getPicture())).title(item.getTitle());
             super.onBeforeClusterItemRendered(item, markerOptions);
         }
 
         @Override
         protected void onBeforeClusterRendered(Cluster<MyItem> cluster, MarkerOptions markerOptions) {
-            Bitmap icon = drawTextToBitmap(R.drawable.car_theft_1, String.valueOf(cluster.getSize()) );
+
+            Bitmap icon = drawTextToBitmap(R.drawable.crime_cluster_3, String.valueOf(cluster.getSize()) );
             markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icon));
         }
     }
-
-    /*
-    This class implements custom icons for homicide markers
-    as well as custom icons for their Clusters
-     */
-    class HomicideIconRendered extends DefaultClusterRenderer<MyItem> {
-
-        public HomicideIconRendered(Context context, GoogleMap map, ClusterManager<MyItem> clusterManager) {
-            super(context, map, clusterManager);
-        }
-        @Override
-        protected void onBeforeClusterItemRendered(MyItem item, MarkerOptions markerOptions) {
-            markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.homicide));
-            super.onBeforeClusterItemRendered(item, markerOptions);
-        }
-        @Override
-        protected void onBeforeClusterRendered(Cluster<MyItem> cluster, MarkerOptions markerOptions) {
-            Bitmap icon = drawTextToBitmap(R.drawable.homicide, String.valueOf(cluster.getSize()) );
-            markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icon));
-        }
-    }
-    /*
-    This class implements custom icons for robbery markers
-    as well as custom icons for their Clusters
-     */
-    class RobberyIconRendered extends DefaultClusterRenderer<MyItem> {
-
-        public RobberyIconRendered(Context context, GoogleMap map, ClusterManager<MyItem> clusterManager) {
-            super(context, map, clusterManager);
-        }
-        @Override
-        protected void onBeforeClusterItemRendered(MyItem item, MarkerOptions markerOptions) {
-            markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.robbery));
-            super.onBeforeClusterItemRendered(item, markerOptions);
-        }
-        @Override
-        protected void onBeforeClusterRendered(Cluster<MyItem> cluster, MarkerOptions markerOptions) {
-            Bitmap icon = drawTextToBitmap(R.drawable.robbery, String.valueOf(cluster.getSize()) );
-            markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icon));
-        }
-    }
-
-    /*
-    This class implements custom icons for sexual assault markers
-    as well as custom icons for their Clusters
-     */
-    class SexAssaultIconRendered extends DefaultClusterRenderer<MyItem> {
-
-        public SexAssaultIconRendered(Context context, GoogleMap map, ClusterManager<MyItem> clusterManager) {
-            super(context, map, clusterManager);
-        }
-        @Override
-        protected void onBeforeClusterItemRendered(MyItem item, MarkerOptions markerOptions) {
-            markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.sexual_assault));
-            super.onBeforeClusterItemRendered(item, markerOptions);
-        }
-        @Override
-        protected void onBeforeClusterRendered(Cluster<MyItem> cluster, MarkerOptions markerOptions) {
-            Bitmap icon = drawTextToBitmap(R.drawable.sexual_assault, String.valueOf(cluster.getSize()) );
-            markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icon));
-        }
-    }
-
-    /*
-    This class implements custom icons for shooting markers
-    as well as custom icons for their Clusters
-     */
-    class ShootingIconRendered extends DefaultClusterRenderer<MyItem> {
-
-        public ShootingIconRendered(Context context, GoogleMap map, ClusterManager<MyItem> clusterManager) {
-            super(context, map, clusterManager);
-        }
-        @Override
-        protected void onBeforeClusterItemRendered(MyItem item, MarkerOptions markerOptions) {
-            markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.gun));
-            super.onBeforeClusterItemRendered(item, markerOptions);
-        }
-        @Override
-        protected void onBeforeClusterRendered(Cluster<MyItem> cluster, MarkerOptions markerOptions) {
-            Bitmap icon = drawTextToBitmap(R.drawable.gun, String.valueOf(cluster.getSize()) );
-            markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icon));
-        }
-    }
-    /*
-    This class implements custom icons for theft over markers
-    as well as custom icons for their Clusters
-     */
-    class TheftOverIconRendered extends DefaultClusterRenderer<MyItem> {
-
-        public TheftOverIconRendered(Context context, GoogleMap map, ClusterManager<MyItem> clusterManager) {
-            super(context, map, clusterManager);
-        }
-        @Override
-        protected void onBeforeClusterItemRendered(MyItem item, MarkerOptions markerOptions) {
-            markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.theft_over));
-            super.onBeforeClusterItemRendered(item, markerOptions);
-        }
-        @Override
-        protected void onBeforeClusterRendered(Cluster<MyItem> cluster, MarkerOptions markerOptions) {
-            Bitmap icon = drawTextToBitmap(R.drawable.theft_over, String.valueOf(cluster.getSize()) );
-            markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icon));
-        }
-    }
-
     /*
     helper function which combines icon and a counter and creates a custom icon for the cluster
      */
@@ -815,7 +764,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Rect bounds = new Rect();
         paint.getTextBounds(gText, 0, gText.length(), bounds);
         int x = (bitmap.getWidth() - bounds.width())/2;
-        int y = (bitmap.getHeight() + bounds.height())/2;
+        int y = (bitmap.getHeight() + bounds.height())/2 + 5;
         canvas.drawText(gText, x, y, paint);
 
         return bitmap;
