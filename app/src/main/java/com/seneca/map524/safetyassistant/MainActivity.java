@@ -372,10 +372,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.options:
-                Intent options = new Intent(this, Options.class);
-                startActivity(options);
-                return true;
             case R.id.about:
                 Intent about = new Intent(this, About.class);
                 startActivity(about);

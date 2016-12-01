@@ -1,12 +1,5 @@
 <resources>
     <string name="app_name">Safety Assistant</string>
-
-    <string name="options">Options</string>
     <string name="about">About</string>
     <string name="help">Help</string>
-
-
-    <string name="search_title">search title</string>
-    <string name="search_hint">Search hint</string>
-    <string name="search_view">Search view</string>
 </resources>
