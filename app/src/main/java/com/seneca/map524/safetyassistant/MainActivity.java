@@ -1,6 +1,5 @@
 package com.seneca.map524.safetyassistant;
 
-import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -15,6 +14,7 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.location.Location;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -22,7 +22,6 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.SearchView;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -82,8 +81,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     List<Double[]> shootingsCoordinates;
     List<Double[]> theftOversCoordinates;
 
-    private SharedPreferences preferences ;
-    private SharedPreferences.Editor editor;
+    private SharedPreferences preferences;
     private static final String PREF_FILE_NAME = "LegendCheckBoxPref";
 
 
@@ -143,9 +141,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         cb_assault.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                editor = preferences.edit();
-                editor.putBoolean("assault", isChecked);
-                editor.commit();
+                preferences.edit().putBoolean("assault", isChecked).apply();
                 updateMapWithData();
             }
         });
@@ -154,9 +150,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         cb_autoTheft.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                editor = preferences.edit();
-                editor.putBoolean("autoTheft", isChecked);
-                editor.commit();
+                preferences.edit().putBoolean("autoTheft", isChecked).apply();
                 updateMapWithData();
             }
         });
@@ -165,9 +159,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         cb_homocide.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                editor = preferences.edit();
-                editor.putBoolean("homicide", isChecked);
-                editor.commit();
+                preferences.edit().putBoolean("homicide", isChecked).apply();
                 updateMapWithData();
             }
         });
@@ -176,9 +168,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         cb_robbery.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                editor = preferences.edit();
-                editor.putBoolean("robbery", isChecked);
-                editor.commit();
+                preferences.edit().putBoolean("robbery", isChecked).apply();
                 updateMapWithData();
             }
         });
@@ -187,9 +177,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         cb_sexAssault.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                editor = preferences.edit();
-                editor.putBoolean("sexAssault", isChecked);
-                editor.commit();
+                preferences.edit().putBoolean("sexAssault", isChecked).apply();
                 updateMapWithData();
             }
         });
@@ -198,9 +186,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         cb_shooting.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                editor = preferences.edit();
-                editor.putBoolean("shooting", isChecked);
-                editor.commit();
+                preferences.edit().putBoolean("shooting", isChecked).apply();
                 updateMapWithData();
             }
         });
@@ -209,9 +195,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         cb_theftOver.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                editor = preferences.edit();
-                editor.putBoolean("theftOver", isChecked);
-                editor.commit();
+                preferences.edit().putBoolean("theftOver", isChecked).apply();
                 updateMapWithData();
             }
         });
@@ -220,9 +204,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         cb_heatMap.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                editor = preferences.edit();
-                editor.putBoolean("heatMap", isChecked);
-                editor.commit();
+                preferences.edit().putBoolean("heatMap", isChecked).apply();
                 updateMapWithData();
             }
         });
@@ -296,7 +278,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
     }
 
@@ -352,7 +334,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.animateCamera(location);
 
         // Initializing the cluster manager with the context and the map.
-        clusterManager = new ClusterManager<MyItem>(this, mMap);
+        clusterManager = new ClusterManager<>(this, mMap);
         clusterManager.setRenderer(new CrimeIconRendered(this, mMap, clusterManager));
         mMap.setOnCameraIdleListener(clusterManager);
         mMap.setOnMarkerClickListener(clusterManager);
@@ -362,7 +344,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == 2) {
             if (permissions.length == 1 &&
                     permissions[0] == android.Manifest.permission.ACCESS_FINE_LOCATION &&
@@ -383,12 +365,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.option_menu, menu);
 
-        inflater.inflate(R.menu.search_menu, menu);
-        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-        SearchView searchView = (SearchView) menu.findItem(R.id.search).getActionView();
-        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
-        searchView.setIconifiedByDefault(false);
-
         return true;
     }
 
@@ -396,9 +372,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.search:
-                onSearchRequested();
-                return true;
             case R.id.options:
                 Intent options = new Intent(this, Options.class);
                 startActivity(options);
@@ -419,8 +392,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     //helper function to parse csv files
     //each line becomes a String which we keep in the List
     List<String[]> getCsvData(String filename) {
-        String next[] = {};
-        List<String[]> list = new ArrayList<String[]>();
+        String next[];
+        List<String[]> list = new ArrayList<>();
         try {
             //Specify asset file name in open();
             CSVReader reader = new CSVReader(new InputStreamReader(getAssets().open(filename)));
@@ -442,7 +415,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     //all coordinates in all datasets come in format "POINT (-79.40189534 43.641915264)"
     //but we need to get doubles from them
     List<Double[]> getParsedCoordinates(List<String[]> data, int column){
-        List<Double[]> list = new ArrayList<Double[]>();
+        List<Double[]> list = new ArrayList<>();
         String[] tokens;
         for (int i = 0; i < data.size(); i++) {
             tokens = data.get(i)[column].split(" ");
@@ -459,7 +432,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         private int picture;
         private String title;
 
-        public MyItem(double lat, double lng, int pictureResource, String text) {
+        MyItem(double lat, double lng, int pictureResource, String text) {
             mPosition = new LatLng(lat, lng);
             picture = pictureResource;
             title = text;
@@ -469,7 +442,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         public LatLng getPosition() {
             return mPosition;
         }
-        public int getPicture() {
+        int getPicture() {
             return picture;
         }
         public String getTitle() {
@@ -497,7 +470,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             if(mOverlay != null) {
                 mOverlay.clearTileCache();
             }
-            ArrayList<WeightedLatLng> list = new ArrayList<WeightedLatLng>();
+            ArrayList<WeightedLatLng> list = new ArrayList<>();
             if(assault_check_state) {
                 for (int i = 0; i < assaultCoordinates.size(); i++) {
                     list.add(new WeightedLatLng(new LatLng(assaultCoordinates.get(i)[1], assaultCoordinates.get(i)[0]), 10.0));
@@ -635,7 +608,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
      */
     class CrimeIconRendered extends DefaultClusterRenderer<MyItem> {
 
-        public CrimeIconRendered(Context context, GoogleMap map, ClusterManager<MyItem> clusterManager) {
+        CrimeIconRendered(Context context, GoogleMap map, ClusterManager<MyItem> clusterManager) {
             super(context, map, clusterManager);
         }
         @Override
