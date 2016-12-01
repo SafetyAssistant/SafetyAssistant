@@ -615,7 +615,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         @Override
         protected void onBeforeClusterRendered(Cluster<MyItem> cluster, MarkerOptions markerOptions) {
-            Bitmap icon = drawTextToBitmap(R.drawable.crime_cluster_2, String.valueOf(cluster.getSize()) );
+            Bitmap icon = drawTextToBitmap(R.drawable.crime_cluster_3, String.valueOf(cluster.getSize()) );
             markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icon));
         }
     }
@@ -647,7 +647,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Rect bounds = new Rect();
         paint.getTextBounds(gText, 0, gText.length(), bounds);
         int x = (bitmap.getWidth() - bounds.width())/2;
-        int y = (bitmap.getHeight() + bounds.height())/2;
+        int y = (bitmap.getHeight() + bounds.height())/2 + 5;
         canvas.drawText(gText, x, y, paint);
 
         return bitmap;
