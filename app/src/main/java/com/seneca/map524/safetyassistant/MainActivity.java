@@ -22,11 +22,15 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -38,6 +42,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
@@ -65,6 +70,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private ClusterManager<MyItem> clusterManager;
     TileOverlay mOverlay;
+    Cluster<MyItem> clickedCluster;
 
     List<String[]> assaults;
     List<String[]> autoThefts;
@@ -336,11 +342,121 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Initializing the cluster manager with the context and the map.
         clusterManager = new ClusterManager<>(this, mMap);
         clusterManager.setRenderer(new CrimeIconRendered(this, mMap, clusterManager));
+        //IdleListener for the marker clustering
         mMap.setOnCameraIdleListener(clusterManager);
+        //Custom InfoWindow for the popup windows when you click a cluster
+        mMap.setInfoWindowAdapter(clusterManager.getMarkerManager());
+        //Setting a custom adapter for Clusters
+        clusterManager.getClusterMarkerCollection().setOnInfoWindowAdapter(new MyCustomAdapterForClusters());
+        //Click listener for regularmarkers
         mMap.setOnMarkerClickListener(clusterManager);
+
+        //Listener for the onClusterClick. Saving the clicked Cluster for later use in the adapter
+        clusterManager.setOnClusterClickListener(new ClusterManager.OnClusterClickListener<MyItem>() {
+            @Override
+            public boolean onClusterClick(Cluster<MyItem> cluster) {
+                clickedCluster = cluster; // remember for use later in the Adapter
+                return false;
+            }
+        });
 
         //Adding markers to the map
         updateMapWithData();
+    }
+
+    /*
+    Custom Adapter for Cluster. Fires when we click a Cluster icon.
+     */
+    class MyCustomAdapterForClusters implements GoogleMap.InfoWindowAdapter {
+        @Override
+        public View getInfoWindow(Marker marker) {
+            return null;
+        }
+
+        @Override
+        public View getInfoContents(Marker marker) {
+            //Retrieving all the items from the clicked cluster
+            ArrayList<MyItem> items = (ArrayList)clickedCluster.getItems();
+            List<String> snippets = new ArrayList<String>();
+            String finalSnippet = "";
+            int counter = 0;
+
+            int assaultCounter = 0;
+            int autoTheftCounter = 0;
+            int homicidesCounter = 0;
+            int robberiesCounter = 0;
+            int sexualAssaultsCounter = 0;
+            int shootingsCounter = 0;
+            int theftOverCounter = 0;
+            //Going through the list of items in order to count different types of crimes
+            for(int i = 0; i < items.size(); i++) {
+                int id = items.get(i).getPicture();
+                switch(id){
+                    case R.drawable.assault:
+                        assaultCounter++;
+                        break;
+                    case R.drawable.car_theft_1:
+                        autoTheftCounter++;
+                        break;
+                    case R.drawable.homicide:
+                        homicidesCounter++;
+                        break;
+                    case R.drawable.robbery:
+                        robberiesCounter++;
+                        break;
+                    case R.drawable.sexual_assault:
+                        sexualAssaultsCounter++;
+                        break;
+                    case R.drawable.gun:
+                        shootingsCounter++;
+                        break;
+                    case R.drawable.theft_over:
+                        theftOverCounter++;
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            //Building the snippet for the Cluster
+            snippets.add(((assaultCounter != 0) ? "Assaults: " + assaultCounter: ""));
+            snippets.add(((autoTheftCounter != 0) ? "Auto Thefts: " + autoTheftCounter : ""));
+            snippets.add(((homicidesCounter != 0) ? "Homicides: " + homicidesCounter : ""));
+            snippets.add(((robberiesCounter != 0) ? "Robberies: " + robberiesCounter : ""));
+            snippets.add(((sexualAssaultsCounter != 0) ? "Sexual Assaults: " + sexualAssaultsCounter : ""));
+            snippets.add(((shootingsCounter != 0) ? "Shootings: " + shootingsCounter : ""));
+            snippets.add(((theftOverCounter != 0) ? "Theft Over: " + theftOverCounter : ""));
+
+            for(String item : snippets) {
+                if(item.length() > 0) {
+                    if(counter == 0) {
+                        finalSnippet += item;
+                        counter ++;
+                    } else {
+                        finalSnippet += "\n" + item;
+                        counter ++;
+                    }
+                }
+            }
+
+            //Building a custom view for the Info Window
+            Context context = getApplicationContext();
+            LinearLayout info = new LinearLayout(context);
+            info.setOrientation(LinearLayout.VERTICAL);
+
+            TextView title = new TextView(context);
+            title.setTextColor(Color.BLACK);
+            title.setGravity(Gravity.CENTER);
+            title.setTypeface(null, Typeface.BOLD);
+            title.setText("List of Crimes");
+
+            TextView snippet = new TextView(context);
+            snippet.setTextColor(Color.GRAY);
+            snippet.setText(finalSnippet);
+            info.addView(title);
+            info.addView(snippet);
+            return info;
+        }
     }
 
     @Override
@@ -615,6 +731,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         @Override
         protected void onBeforeClusterRendered(Cluster<MyItem> cluster, MarkerOptions markerOptions) {
+
             Bitmap icon = drawTextToBitmap(R.drawable.crime_cluster_3, String.valueOf(cluster.getSize()) );
             markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icon));
         }
