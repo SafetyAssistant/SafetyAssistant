@@ -2,4 +2,8 @@
     <string name="app_name">Safety Assistant</string>
     <string name="about">About</string>
     <string name="help">Help</string>
+
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
 </resources>
