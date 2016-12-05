@@ -29,11 +29,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="22sp"
+                android:textStyle="bold"
+                android:paddingTop="10dp"
+                android:paddingBottom="5dp"
                 android:layout_weight="4.00" />
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:srcCompat="@drawable/assault"
+                android:paddingTop="5dp"
                 android:layout_weight="0.40" />
 
         </LinearLayout>
@@ -44,8 +48,15 @@
             <TextView
                 android:text="Application of force. An assault is the intentional application of force, directly or indirectly, to another person without that person's consent. Threat to apply force. An assault may also take the form of an attempt or threat, by an act or gesture, to apply force to another person."
                 android:layout_width="360dp"
+                android:paddingBottom="10dp"
+                android:textSize="16dp"
                 android:layout_height="wrap_content" />
         </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"/>
 
         <LinearLayout
             android:orientation="horizontal"
@@ -57,11 +68,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="22sp"
+                android:textStyle="bold"
+                android:paddingTop="10dp"
+                android:paddingBottom="5dp"
                 android:layout_weight="4.00" />
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:srcCompat="@drawable/car_theft_1"
+                android:paddingTop="5dp"
                 android:layout_weight="0.40" />
 
         </LinearLayout>
@@ -72,8 +87,15 @@
             <TextView
                 android:text="Motor vehicle theft or, grand theft auto, is the criminal act of stealing or attempting to steal a car (or any other motor vehicle)."
                 android:layout_width="360dp"
+                android:paddingBottom="10dp"
+                android:textSize="16dp"
                 android:layout_height="wrap_content" />
         </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"/>
 
         <LinearLayout
             android:orientation="horizontal"
@@ -85,11 +107,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="22sp"
+                android:textStyle="bold"
+                android:paddingTop="10dp"
+                android:paddingBottom="5dp"
                 android:layout_weight="4.00" />
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:srcCompat="@drawable/homicide"
+                android:paddingTop="5dp"
                 android:layout_weight="0.40" />
 
         </LinearLayout>
@@ -100,8 +126,15 @@
             <TextView
                 android:text="To begin with, not all homicides are crimes. Homicides include all killings of humans. Many homicides, such as murder and manslaughter, violate criminal laws. Others, such as a killing committed in justified self-defense, are not criminal. Illegal killings range from manslaughter to murder, with multiple degrees of each representing the gravity of the crime."
                 android:layout_width="360dp"
+                android:paddingBottom="10dp"
+                android:textSize="16dp"
                 android:layout_height="wrap_content" />
         </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"/>
 
         <LinearLayout
             android:orientation="horizontal"
@@ -113,11 +146,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="22sp"
+                android:textStyle="bold"
+                android:paddingTop="10dp"
+                android:paddingBottom="5dp"
                 android:layout_weight="4.00" />
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:srcCompat="@drawable/robbery"
+                android:paddingTop="5dp"
                 android:layout_weight="0.40" />
 
         </LinearLayout>
@@ -128,8 +165,15 @@
             <TextView
                 android:text="Robbery implies the use of force usually accompanied by the use or presence of a dangerous weapon."
                 android:layout_width="360dp"
+                android:paddingBottom="10dp"
+                android:textSize="16dp"
                 android:layout_height="wrap_content" />
         </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"/>
 
         <LinearLayout
             android:orientation="horizontal"
@@ -141,11 +185,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="22sp"
+                android:textStyle="bold"
+                android:paddingTop="10dp"
+                android:paddingBottom="5dp"
                 android:layout_weight="4.00" />
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:srcCompat="@drawable/sexual_assault"
+                android:paddingTop="5dp"
                 android:layout_weight="0.40" />
 
         </LinearLayout>
@@ -156,8 +204,15 @@
             <TextView
                 android:text="Sexual assault is a sexual act in which a person is coerced or physically forced to engage against their will, or non-consensual sexual touching of a person."
                 android:layout_width="360dp"
+                android:paddingBottom="10dp"
+                android:textSize="16dp"
                 android:layout_height="wrap_content" />
         </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"/>
 
         <LinearLayout
             android:orientation="horizontal"
@@ -169,11 +224,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="22sp"
+                android:textStyle="bold"
+                android:paddingTop="10dp"
+                android:paddingBottom="5dp"
                 android:layout_weight="4.00" />
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:srcCompat="@drawable/assault"
+                android:paddingTop="5dp"
                 android:layout_weight="0.40" />
 
         </LinearLayout>
@@ -184,8 +243,15 @@
             <TextView
                 android:text="Shooting is defined as incidence where involvement of a firearm or firewarms fired are shot, but nobody is killed."
                 android:layout_width="360dp"
+                android:paddingBottom="10dp"
+                android:textSize="16dp"
                 android:layout_height="wrap_content" />
         </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"/>
 
         <LinearLayout
             android:orientation="horizontal"
@@ -197,11 +263,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="22sp"
+                android:textStyle="bold"
+                android:paddingTop="10dp"
+                android:paddingBottom="5dp"
                 android:layout_weight="4.00" />
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:srcCompat="@drawable/assault"
+                android:paddingTop="5dp"
                 android:layout_weight="0.40" />
 
         </LinearLayout>
@@ -212,6 +282,8 @@
             <TextView
                 android:text="Theft Over $5000 is a criminal offence where the value of the amount alleged to have been stolen is worth over $$5000."
                 android:layout_width="360dp"
+                android:paddingBottom="10dp"
+                android:textSize="16dp"
                 android:layout_height="wrap_content" />
         </LinearLayout>
     </LinearLayout>

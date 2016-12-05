@@ -29,6 +29,7 @@
             android:gravity="center_horizontal"
             android:text="Safety Assistant"
             android:textSize="24sp"
+            android:textStyle="bold"
             tools:gravity="center" />
 
         </LinearLayout>
@@ -47,11 +48,22 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Safety Assistant is project by Andy Cooc and Oleksandr Zhurbenko for an assignment in MAP524/DPS924 (Android Programming) class at Seneca College @ York.  The data are gathered from Toronto Police 2016 records."/>
+                android:paddingTop="30dp"
+                android:textSize="16dp"
+                android:text="Safety Assistant is project by Andy Cooc and Oleksandr Zhurbenko for an assignment in MAP524/DPS924 (Android Programming) class at Seneca College @ York."/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:paddingTop="15dp"
+                android:textSize="16dp"
+                android:text="The data are gathered from Toronto Police 2016 open data sets." />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="15dp"
+                android:textSize="16dp"
                 android:text="The purpose of this app is to map out criminal acitivites using data from the Toronto Police which includes assault, auto theft, homicide, robbery, sexual assault, shooing, and theft over $5000 so it would have a visual representation of it on a map. The user can decide which marker to display on the map."></TextView>
         </LinearLayout>
     </LinearLayout>
