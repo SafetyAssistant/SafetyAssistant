@@ -126,7 +126,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
             <TextView
-                android:text="Robbery implies the use of force usually acoompanied by the use or presence of a dangerous weapon."
+                android:text="Robbery implies the use of force usually accompanied by the use or presence of a dangerous weapon."
                 android:layout_width="360dp"
                 android:layout_height="wrap_content" />
         </LinearLayout>
