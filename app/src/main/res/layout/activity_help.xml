@@ -231,7 +231,7 @@
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:srcCompat="@drawable/assault"
+                app:srcCompat="@drawable/gun"
                 android:paddingTop="5dp"
                 android:layout_weight="0.40" />
 
@@ -270,7 +270,7 @@
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:srcCompat="@drawable/assault"
+                app:srcCompat="@drawable/theft_over"
                 android:paddingTop="5dp"
                 android:layout_weight="0.40" />
 
@@ -280,11 +280,51 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
             <TextView
-                android:text="Theft Over $5000 is a criminal offence where the value of the amount alleged to have been stolen is worth over $$5000."
+                android:text="Theft Over $5000 is a criminal offence where the value of the amount alleged to have been stolen is worth over 5000 dollars."
                 android:layout_width="360dp"
                 android:paddingBottom="10dp"
                 android:textSize="16dp"
                 android:layout_height="wrap_content" />
         </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"/>
+        
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:text="Heat Map"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:paddingTop="10dp"
+                android:paddingBottom="5dp"
+                android:layout_weight="4.00" />
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@drawable/heat_map"
+                android:paddingTop="5dp"
+                android:layout_weight="0.40" />
+
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:text="Heat map will map out most active clusters in red and least in green."
+                android:layout_width="360dp"
+                android:paddingBottom="10dp"
+                android:textSize="16dp"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
     </LinearLayout>
 </ScrollView>
